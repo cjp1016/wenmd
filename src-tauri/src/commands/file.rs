@@ -116,3 +116,32 @@ pub fn save_image(path: String, data: Vec<u8>) -> Result<String, String> {
     fs::write(&path, &data).map_err(|e| format!("Failed to save image: {}", e))?;
     Ok(path)
 }
+
+/// Rename a file (move to new path within same directory)
+#[tauri::command]
+pub fn rename_file(old_path: String, new_name: String) -> Result<String, String> {
+    let old = Path::new(&old_path);
+    if !old.exists() {
+        return Err("File does not exist".to_string());
+    }
+    let parent = old.parent().ok_or("Invalid path")?;
+    let new_path = parent.join(&new_name);
+    let new_path_str = new_path.to_string_lossy().to_string();
+    fs::rename(&old_path, &new_path_str).map_err(|e| format!("Failed to rename file: {}", e))?;
+    Ok(new_path_str)
+}
+
+/// Delete a file permanently
+#[tauri::command]
+pub fn delete_file(path: String) -> Result<(), String> {
+    let p = Path::new(&path);
+    if !p.exists() {
+        return Err("File does not exist".to_string());
+    }
+    if p.is_dir() {
+        fs::remove_dir_all(&path).map_err(|e| format!("Failed to delete directory: {}", e))?;
+    } else {
+        fs::remove_file(&path).map_err(|e| format!("Failed to delete file: {}", e))?;
+    }
+    Ok(())
+}

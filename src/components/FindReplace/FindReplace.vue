@@ -3,6 +3,7 @@ import { ref, watch } from 'vue';
 import { useEditorStore } from '../../stores/editorStore';
 import { useFileStore } from '../../stores/fileStore';
 import { useI18n } from '../../composables/useI18n';
+import { REPLACE_TEXT_EVENT, REPLACE_ALL_EVENT } from '../../composables/useShortcut';
 
 const editorStore = useEditorStore();
 const fileStore = useFileStore();
@@ -43,23 +44,21 @@ function updateMatches() {
 }
 
 function doReplace() {
-  const tab = fileStore.activeTab;
-  if (!tab || !findText.value) return;
-  const regex = new RegExp(findText.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-  tab.content = tab.content.replace(regex, replaceText.value);
-  tab.isDirty = true;
-  editorStore.updateStats(tab.content);
-  updateMatches();
+  if (!findText.value) return;
+  window.dispatchEvent(new CustomEvent(REPLACE_TEXT_EVENT, {
+    detail: { find: findText.value, replace: replaceText.value }
+  }));
+  // Update match count after a tick
+  setTimeout(updateMatches, 50);
 }
 
 function doReplaceAll() {
-  const tab = fileStore.activeTab;
-  if (!tab || !findText.value) return;
-  const regex = new RegExp(findText.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-  tab.content = tab.content.replace(regex, replaceText.value);
-  tab.isDirty = true;
-  editorStore.updateStats(tab.content);
-  updateMatches();
+  if (!findText.value) return;
+  window.dispatchEvent(new CustomEvent(REPLACE_ALL_EVENT, {
+    detail: { find: findText.value, replace: replaceText.value }
+  }));
+  // Update match count after a tick
+  setTimeout(updateMatches, 50);
 }
 
 watch(findText, () => updateMatches());

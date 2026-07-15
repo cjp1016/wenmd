@@ -95,6 +95,25 @@ export const useFileStore = defineStore('file', () => {
     }
   }
 
+  async function exportHtml() {
+    const tab = activeTab.value;
+    if (!tab) return;
+
+    try {
+      const defaultName = tab.name.replace(/\.md$/, '') + '.html';
+      const selected = await saveDialog({
+        defaultPath: defaultName,
+        filters: [{ name: 'HTML', extensions: ['html'] }],
+      });
+      if (!selected) return;
+
+      await invoke('export_html', { content: tab.content, path: selected });
+    } catch (e) {
+      console.error('Failed to export HTML:', e);
+      alert(`Failed to export HTML: ${e}`);
+    }
+  }
+
   function closeTab(tabId: string) {
     const idx = tabs.value.findIndex((t) => t.id === tabId);
     if (idx === -1) return;
@@ -140,6 +159,7 @@ export const useFileStore = defineStore('file', () => {
     newFile,
     openFile,
     saveFile,
+    exportHtml,
     closeTab,
     switchTab,
     updateContent,

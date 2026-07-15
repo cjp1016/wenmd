@@ -103,7 +103,7 @@ html, body, #app {
     sans-serif;
   font-size: 15px;
   color: var(--text-primary);
-  background-color: var(--bg-primary);
+  background-color: transparent;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -133,6 +133,9 @@ html, body, #app {
   flex-direction: column;
   width: 100%;
   height: 100%;
+  background-color: var(--bg-primary);
+  border-radius: 10px;
+  overflow: hidden;
 }
 
 .app-body {
@@ -226,30 +229,4 @@ html, body, #app {
   border-color: var(--accent-color);
 }
 
-/* Empty state / Welcome page */
-.welcome-page {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: var(--text-tertiary);
-  gap: 20px;
-  user-select: none;
-}
-
-.welcome-icon {
-  width: 64px;
-  height: 64px;
-  opacity: 0.3;
-  color: var(--text-tertiary);
-}
-
-.welcome-text {
-  font-size: 15px;
-  color: var(--text-tertiary);
-}
-
-.welcome-action {
-  margin-top: 8px;
-}
+/* Empty state */

@@ -1,4 +1,5 @@
 mod commands;
+mod menu;
 
 use commands::{file, export};
 
@@ -15,8 +16,18 @@ pub fn run() {
             file::save_file_as,
             file::list_directory,
             file::save_image,
+            file::rename_file,
+            file::delete_file,
             export::export_html,
         ])
+        .setup(|app| {
+            let handle = app.handle().clone();
+            menu::build_menu(&handle).expect("Failed to build menu");
+            Ok(())
+        })
+        .on_menu_event(|app, event| {
+            menu::handle_menu_event(app, event);
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
