@@ -15,6 +15,7 @@ const fileStore = useFileStore();
 
 const crepeInstance = shallowRef<Crepe | null>(null);
 const isInternalChange = ref(false);
+const isEditorEmpty = ref(true);
 
 const { loading } = useEditor((root) => {
   const initialValue = fileStore.activeTab?.content || '';
@@ -51,6 +52,7 @@ const { loading } = useEditor((root) => {
       if (isInternalChange.value) return;
       fileStore.updateContent(markdown);
       editorStore.updateStats(markdown);
+      isEditorEmpty.value = markdown.trim().length === 0;
     });
   });
 
@@ -65,6 +67,7 @@ watch(
     await nextTick();
     const newContent = fileStore.activeTab?.content || '';
     const currentContent = crepe.getMarkdown();
+    isEditorEmpty.value = newContent.trim().length === 0;
     if (currentContent !== newContent) {
       isInternalChange.value = true;
       try {
@@ -188,7 +191,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="md-editor-container">
+  <div class="md-editor-container" :class="{ 'is-empty': isEditorEmpty }">
     <div v-if="loading" class="editor-loading">Loading...</div>
     <div class="crepe-wrapper">
       <Milkdown />

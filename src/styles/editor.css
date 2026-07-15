@@ -209,6 +209,37 @@
   height: 0;
 }
 
+/* ===== Empty state: hide BlockEdit UI & code block chrome ===== */
+.md-editor-container.is-empty .milkdown-block-handle,
+.md-editor-container.is-empty .milkdown-slash-menu {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Hide code block tools (language picker / Copy) when document is empty */
+.md-editor-container.is-empty .milkdown-code-block .tools,
+.md-editor-container.is-empty .milkdown-code-block .language-picker {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Hide CodeMirror gutters (line numbers) when document is empty */
+.md-editor-container.is-empty .milkdown-code-block .cm-gutters,
+.md-editor-container.is-empty .milkdown-code-block .cm-lineNumbers {
+  display: none !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Make the placeholder more prominent when document is empty */
+.md-editor-container.is-empty .ProseMirror p.is-editor-empty:first-child::before {
+  color: var(--text-tertiary);
+  font-size: 15px;
+  font-style: normal;
+}
+
 /* Selection */
 ::selection {
   background: var(--accent-light);

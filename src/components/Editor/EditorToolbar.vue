@@ -304,6 +304,8 @@ onUnmounted(() => {
   cursor: pointer;
   border-radius: 4px;
   transition: all 0.12s;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .toolbar-btn:hover {
@@ -315,9 +317,26 @@ onUnmounted(() => {
   background: var(--bg-active);
 }
 
+.toolbar-btn:focus,
+.toolbar-btn:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+/* 区分 :focus-visible 与 .active：focus 用环，active 用填充 */
+.toolbar-btn:focus-visible {
+  box-shadow: 0 0 0 1.5px var(--accent-color);
+  background: transparent;
+}
+
 .toolbar-btn.active {
   color: var(--accent-color);
   background: var(--accent-light);
+}
+
+.toolbar-btn.active:focus-visible {
+  background: var(--accent-light);
+  box-shadow: 0 0 0 1.5px var(--accent-color);
 }
 
 /* Vertical divider between button groups */
