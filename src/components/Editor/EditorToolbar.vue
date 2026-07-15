@@ -48,10 +48,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="editor-toolbar" :class="{ 'is-macos': isMacOS }">
-    <!-- macOS traffic light padding -->
-    <div v-if="isMacOS" class="traffic-light-space"></div>
-
+  <div class="editor-toolbar" :class="{ 'is-macos': isMacOS }" data-tauri-drag-region>
     <!-- Left: sidebar toggle + format tools -->
     <div class="toolbar-left">
       <!-- Sidebar toggle -->
@@ -148,9 +145,9 @@ onUnmounted(() => {
     </div>
 
     <!-- Center: file name (draggable) -->
-    <div class="toolbar-center">
+    <div class="toolbar-center" data-tauri-drag-region>
       <span class="toolbar-title">
-        {{ fileStore.activeTab?.name || 'mdView' }}
+        {{ fileStore.activeTab?.name || 'WenMd' }}
         <span v-if="fileStore.activeTab?.isDirty" class="dirty-dot">●</span>
       </span>
     </div>
@@ -237,13 +234,9 @@ onUnmounted(() => {
   -webkit-app-region: drag;
 }
 
-/* macOS: reserve space for traffic light buttons */
+/* macOS: reserve space for native traffic lights */
 .editor-toolbar.is-macos {
-  padding-left: 70px;
-}
-
-.traffic-light-space {
-  display: none;
+  padding-left: 78px;
 }
 
 /* Button groups: not draggable */

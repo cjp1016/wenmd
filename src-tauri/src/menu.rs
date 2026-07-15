@@ -6,7 +6,7 @@ use tauri::{
 /// Build the native application menu bar
 pub fn build_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     // --- App submenu (required as first item on macOS) ---
-    let app_submenu = SubmenuBuilder::new(app, "mdView")
+    let app_submenu = SubmenuBuilder::new(app, "WenMd")
         .about(None)
         .separator()
         .text("settings", "Settings...")

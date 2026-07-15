@@ -2,6 +2,7 @@ mod commands;
 mod menu;
 
 use commands::{file, export};
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -23,6 +24,16 @@ pub fn run() {
         .setup(|app| {
             let handle = app.handle().clone();
             menu::build_menu(&handle).expect("Failed to build menu");
+
+            // Set transparent overlay titlebar on macOS to preserve native traffic lights
+            #[cfg(target_os = "macos")]
+            {
+                use tauri::TitleBarStyle;
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.set_title_bar_style(TitleBarStyle::Overlay);
+                }
+            }
+
             Ok(())
         })
         .on_menu_event(|app, event| {

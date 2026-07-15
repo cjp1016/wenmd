@@ -28,36 +28,6 @@ const { t } = useI18n();
 const sidebarWidth = ref(settingsStore.settings.sidebarWidth);
 const isDragOver = ref(false);
 
-let isDragging = false;
-let startX = 0;
-let startWidth = 0;
-
-function startDrag(e: MouseEvent) {
-  isDragging = true;
-  startX = e.clientX;
-  startWidth = sidebarWidth.value;
-  document.addEventListener('mousemove', onDrag);
-  document.addEventListener('mouseup', stopDrag);
-  document.body.style.cursor = 'col-resize';
-  e.preventDefault();
-}
-
-function onDrag(e: MouseEvent) {
-  if (!isDragging) return;
-  const diff = e.clientX - startX;
-  sidebarWidth.value = Math.max(180, Math.min(500, startWidth + diff));
-}
-
-function stopDrag() {
-  if (isDragging) {
-    isDragging = false;
-    settingsStore.setSidebarWidth(sidebarWidth.value);
-    document.removeEventListener('mousemove', onDrag);
-    document.removeEventListener('mouseup', stopDrag);
-    document.body.style.cursor = '';
-  }
-}
-
 const isMac = () => navigator.platform.toUpperCase().includes('MAC');
 
 const editorClass = computed(() => ({
@@ -166,15 +136,6 @@ onMounted(() => {
         <FileSidebar />
       </div>
 
-      <!-- Resize handle with wider hit area (1.2) -->
-      <div
-        v-if="settingsStore.settings.sidebarVisible"
-        class="resize-handle"
-        @mousedown="startDrag"
-      >
-        <div class="resize-handle-line"></div>
-      </div>
-
       <!-- Main editor area -->
       <div class="app-main" :class="editorClass">
         <EditorTabs />
@@ -192,7 +153,7 @@ onMounted(() => {
                   <line x1="9" y1="13" x2="15" y2="13"/>
                   <line x1="9" y1="16" x2="13" y2="16"/>
                 </svg>
-                <h1 class="welcome-title">mdView</h1>
+                <h1 class="welcome-title">WenMd</h1>
               </div>
               <div class="welcome-actions">
                 <button class="welcome-btn" @click="fileStore.newFile()">
@@ -247,36 +208,13 @@ onMounted(() => {
   overflow: hidden;
   display: flex;
   transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-right: 1px solid var(--border-light);
 }
 
 .sidebar-wrapper.collapsed {
   width: 0 !important;
   pointer-events: none;
-}
-
-/* Resize handle: visual 1px line, wider hit area (1.2) */
-.resize-handle {
-  width: 5px;
-  cursor: col-resize;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  position: relative;
-  z-index: 5;
-}
-
-.resize-handle-line {
-  width: 1px;
-  height: 100%;
-  background: var(--border-light);
-  transition: background 0.15s, width 0.15s;
-}
-
-.resize-handle:hover .resize-handle-line {
-  width: 2px;
-  background: var(--accent-color);
-  border-radius: 1px;
+  border-right: none;
 }
 
 /* Editor area: column flex inside the row wrapper */
@@ -307,8 +245,7 @@ onMounted(() => {
   transition: all 0.3s ease;
 }
 
-.app-layout.is-focus-mode .sidebar-wrapper,
-.app-layout.is-focus-mode .resize-handle {
+.app-layout.is-focus-mode .sidebar-wrapper {
   width: 0 !important;
   overflow: hidden;
   pointer-events: none;

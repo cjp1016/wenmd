@@ -2,13 +2,11 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useEditorStore } from '../../stores/editorStore';
 import { useFileStore } from '../../stores/fileStore';
-import { useSettingsStore } from '../../stores/settingsStore';
 import { useAutoSave } from '../../composables/useAutoSave';
 import { useI18n } from '../../composables/useI18n';
 
 const editorStore = useEditorStore();
 const fileStore = useFileStore();
-const settings = useSettingsStore();
 const { isSaving } = useAutoSave();
 const { t } = useI18n();
 
@@ -78,14 +76,11 @@ onUnmounted(() => {
       </span>
     </div>
 
-    <!-- Right: theme toggle -->
+    <!-- Right: file path -->
     <div class="status-right">
       <span class="status-item file-path" :title="fileStore.activeTab?.path || ''" v-if="fileStore.activeTab?.path">
         {{ fileStore.activeTab.path }}
       </span>
-      <button class="btn-link" @click="settings.setTheme(settings.settings.theme === 'dark' ? 'light' : 'dark')" :title="t('toggle_theme')">
-        {{ settings.settings.theme === 'dark' ? '☀' : '☾' }}
-      </button>
     </div>
   </div>
 </template>
