@@ -6,6 +6,8 @@ import { useEditorStore } from '../stores/editorStore';
 // Custom event names for editor insertion
 export const INSERT_TEXT_EVENT = 'mdview:insert-text';
 export const INSERT_WRAP_EVENT = 'mdview:insert-wrap';
+export const REPLACE_TEXT_EVENT = 'mdview:replace-text';
+export const REPLACE_ALL_EVENT = 'mdview:replace-all';
 
 export function useShortcut() {
   const fileStore = useFileStore();

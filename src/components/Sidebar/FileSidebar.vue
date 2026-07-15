@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useFileStore } from '../../stores/fileStore';
-import { useSettingsStore } from '../../stores/settingsStore';
 import { invoke } from '@tauri-apps/api/core';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { useI18n } from '../../composables/useI18n';
@@ -9,19 +8,37 @@ import FileTreeItem from './FileTreeItem.vue';
 import type { FileEntry } from '../../types';
 
 const fileStore = useFileStore();
-const settingsStore = useSettingsStore();
 const { t } = useI18n();
 
 const allFiles = ref<FileEntry[]>([]);
 const currentPath = ref<string | null>(null);
 const searchText = ref('');
 
-const files = computed(() => {
-  if (!searchText.value) return allFiles.value;
-  return allFiles.value.filter((item) =>
-    item.name.toLowerCase().includes(searchText.value.toLowerCase())
-  );
-});
+function filterFiles(entries: FileEntry[], query: string): FileEntry[] {
+  if (!query) return entries;
+  const lower = query.toLowerCase();
+  const result: FileEntry[] = [];
+
+  for (const entry of entries) {
+    if (entry.is_dir) {
+      if (entry.name.toLowerCase().includes(lower)) {
+        result.push(entry);
+      } else if (entry.children && entry.children.length > 0) {
+        const filteredChildren = filterFiles(entry.children, query);
+        if (filteredChildren.length > 0) {
+          result.push({ ...entry, children: filteredChildren });
+        }
+      }
+    } else {
+      if (entry.name.toLowerCase().includes(lower)) {
+        result.push(entry);
+      }
+    }
+  }
+  return result;
+}
+
+const files = computed(() => filterFiles(allFiles.value, searchText.value));
 
 async function openFolder() {
   const selected = await openDialog({
@@ -58,6 +75,12 @@ async function loadSubDirectory(path: string): Promise<FileEntry[]> {
   }
 }
 
+async function refreshFiles() {
+  if (currentPath.value) {
+    await loadDirectory(currentPath.value);
+  }
+}
+
 const folderName = () => {
   if (!currentPath.value) return '';
   const parts = currentPath.value.split(/[/\\]/);
@@ -74,9 +97,7 @@ onMounted(() => {
 
 <template>
   <div class="file-sidebar">
-    <!-- Top: search + actions -->
     <div class="sidebar-top">
-      <!-- Search bar -->
       <div class="sidebar-search">
         <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="7"/>
@@ -89,7 +110,6 @@ onMounted(() => {
         />
       </div>
 
-      <!-- Action buttons row -->
       <div class="sidebar-actions">
         <button class="sidebar-action-btn" @click="fileStore.newFile()" :title="t('new_file')">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -109,30 +129,19 @@ onMounted(() => {
             <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
           </svg>
         </button>
-      </div>
-
-      <!-- Sidebar toggle (hamburger) -->
-      <div class="sidebar-toggle-row">
-        <button
-          class="sidebar-toggle-btn"
-          @click="settingsStore.toggleSidebar()"
-          :title="t('toggle_sidebar') + ' (⌘B)'"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <line x1="3" y1="12" x2="21" y2="12"/>
-            <line x1="3" y1="18" x2="21" y2="18"/>
+        <button class="sidebar-action-btn" @click="refreshFiles()" :title="t('refresh')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <polyline points="23,4 23,10 17,10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
           </svg>
         </button>
       </div>
     </div>
 
-    <!-- Folder name header -->
     <div class="sidebar-header" v-if="currentPath">
       <span class="sidebar-title">{{ folderName() }}</span>
     </div>
 
-    <!-- File tree -->
     <div class="sidebar-tree">
       <FileTreeItem
         v-for="item in files"
@@ -142,6 +151,7 @@ onMounted(() => {
         :active-path="fileStore.activeTab?.path || ''"
         @open-file="handleOpenFile"
         @load-children="loadSubDirectory"
+        @refresh="refreshFiles"
       />
       <div v-if="!currentPath" class="sidebar-empty">
         <p>{{ t('no_folder') }}</p>
@@ -221,32 +231,6 @@ onMounted(() => {
 }
 
 .sidebar-action-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-.sidebar-toggle-row {
-  display: flex;
-  padding-top: 4px;
-  border-top: 1px solid var(--border-light);
-  margin-top: 4px;
-}
-
-.sidebar-toggle-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: none;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  border-radius: 5px;
-  transition: all 0.12s;
-}
-
-.sidebar-toggle-btn:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
 }

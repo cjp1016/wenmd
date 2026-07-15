@@ -8,7 +8,7 @@ import '@milkdown/crepe/theme/classic.css';
 
 import { useEditorStore } from '../../stores/editorStore';
 import { useFileStore } from '../../stores/fileStore';
-import { INSERT_TEXT_EVENT, INSERT_WRAP_EVENT } from '../../composables/useShortcut';
+import { INSERT_TEXT_EVENT, INSERT_WRAP_EVENT, REPLACE_TEXT_EVENT, REPLACE_ALL_EVENT } from '../../composables/useShortcut';
 
 const editorStore = useEditorStore();
 const fileStore = useFileStore();
@@ -112,9 +112,67 @@ function handleInsertWrap(e: Event) {
   view.dispatch(tr);
 }
 
+function handleReplaceText(e: Event) {
+  const ce = e as CustomEvent<{ find: string; replace: string }>;
+  const { find, replace } = ce.detail;
+  const crepe = crepeInstance.value;
+  if (!crepe || !find) return;
+
+  const pmEl = document.querySelector('.ProseMirror') as any;
+  if (!pmEl || !pmEl.pmViewDesc) return;
+  const view = pmEl.pmViewDesc.view;
+  if (!view) return;
+
+  // Find first occurrence and replace
+  const docText = view.state.doc.textContent;
+  const idx = docText.indexOf(find);
+  if (idx === -1) return;
+
+  const tr = view.state.tr.insertText(replace, idx, idx + find.length);
+  view.dispatch(tr);
+}
+
+function handleReplaceAll(e: Event) {
+  const ce = e as CustomEvent<{ find: string; replace: string }>;
+  const { find, replace } = ce.detail;
+  const crepe = crepeInstance.value;
+  if (!crepe || !find) return;
+
+  const pmEl = document.querySelector('.ProseMirror') as any;
+  if (!pmEl || !pmEl.pmViewDesc) return;
+  const view = pmEl.pmViewDesc.view;
+  if (!view) return;
+
+  // Replace all occurrences from end to start to preserve positions
+  const docText = view.state.doc.textContent;
+  let tr = view.state.tr;
+
+  // Collect all match positions first
+  const positions: number[] = [];
+  let searchIdx = 0;
+  while (searchIdx < docText.length) {
+    const found = docText.indexOf(find, searchIdx);
+    if (found === -1) break;
+    positions.push(found);
+    searchIdx = found + find.length;
+  }
+
+  // Replace from end to start
+  for (let i = positions.length - 1; i >= 0; i--) {
+    const pos = positions[i];
+    tr = tr.insertText(replace, pos, pos + find.length);
+  }
+
+  if (positions.length > 0) {
+    view.dispatch(tr);
+  }
+}
+
 onMounted(() => {
   window.addEventListener(INSERT_TEXT_EVENT, handleInsertText);
   window.addEventListener(INSERT_WRAP_EVENT, handleInsertWrap);
+  window.addEventListener(REPLACE_TEXT_EVENT, handleReplaceText);
+  window.addEventListener(REPLACE_ALL_EVENT, handleReplaceAll);
 
   if (fileStore.tabCount === 0) {
     fileStore.newFile();
@@ -124,6 +182,8 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener(INSERT_TEXT_EVENT, handleInsertText);
   window.removeEventListener(INSERT_WRAP_EVENT, handleInsertWrap);
+  window.removeEventListener(REPLACE_TEXT_EVENT, handleReplaceText);
+  window.removeEventListener(REPLACE_ALL_EVENT, handleReplaceAll);
 });
 </script>
 

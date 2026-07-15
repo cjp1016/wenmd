@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useEditorStore } from '../../stores/editorStore';
 import { useFileStore } from '../../stores/fileStore';
 import { useSettingsStore } from '../../stores/settingsStore';
@@ -10,6 +11,43 @@ const fileStore = useFileStore();
 const settings = useSettingsStore();
 const { isSaving } = useAutoSave();
 const { t } = useI18n();
+
+// Cursor position tracking
+const cursorLine = ref(1);
+const cursorCol = ref(1);
+
+function updateCursorPosition() {
+  const pm = document.querySelector('.ProseMirror') as HTMLElement | null;
+  if (!pm) return;
+
+  const pmDesc = (pm as any).pmViewDesc;
+  if (!pmDesc || !pmDesc.view) return;
+
+  const view = pmDesc.view;
+  try {
+    const { from } = view.state.selection;
+    // Calculate line/col from position
+    const resolvedPos = view.state.doc.resolve(from);
+    cursorLine.value = resolvedPos.line;
+    cursorCol.value = from - resolvedPos.start(resolvedPos.depth) + 1;
+  } catch {
+    // fallback if position resolution fails
+  }
+}
+
+let cursorTimer: ReturnType<typeof setInterval> | null = null;
+
+onMounted(() => {
+  // Poll cursor position every 200ms when focused
+  cursorTimer = setInterval(updateCursorPosition, 200);
+  // Also listen for selection changes
+  document.addEventListener('selectionchange', updateCursorPosition);
+});
+
+onUnmounted(() => {
+  if (cursorTimer) clearInterval(cursorTimer);
+  document.removeEventListener('selectionchange', updateCursorPosition);
+});
 </script>
 
 <template>
@@ -21,13 +59,29 @@ const { t } = useI18n();
       <span v-else-if="fileStore.activeTab" class="status-saved">{{ t('saved') }}</span>
     </div>
 
-    <!-- Center -->
-    <div class="status-center"></div>
-
-    <!-- Right: word count + theme -->
-    <div class="status-right">
-      <span class="status-item" v-if="fileStore.activeTab">
+    <!-- Center: cursor position + stats -->
+    <div class="status-center" v-if="fileStore.activeTab">
+      <span class="status-item cursor-pos">
+        {{ t('line') }} {{ cursorLine }}, {{ t('col') }} {{ cursorCol }}
+      </span>
+      <span class="status-divider"></span>
+      <span class="status-item">
+        {{ editorStore.lineCount }} {{ t('lines') }}
+      </span>
+      <span class="status-divider"></span>
+      <span class="status-item">
         {{ editorStore.wordCount }} {{ t('words') }}
+      </span>
+      <span class="status-divider"></span>
+      <span class="status-item">
+        {{ editorStore.charCount }} {{ t('chars') }}
+      </span>
+    </div>
+
+    <!-- Right: theme toggle -->
+    <div class="status-right">
+      <span class="status-item file-path" :title="fileStore.activeTab?.path || ''" v-if="fileStore.activeTab?.path">
+        {{ fileStore.activeTab.path }}
       </span>
       <button class="btn-link" @click="settings.setTheme(settings.settings.theme === 'dark' ? 'light' : 'dark')" :title="t('toggle_theme')">
         {{ settings.settings.theme === 'dark' ? '☀' : '☾' }}
@@ -55,12 +109,18 @@ const { t } = useI18n();
 .status-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
+  flex-shrink: 0;
 }
 
 .status-center {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
 }
 
 .status-saved {
@@ -77,5 +137,26 @@ const { t } = useI18n();
 
 .status-item {
   color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.status-divider {
+  width: 1px;
+  height: 10px;
+  background: var(--border-color);
+  flex-shrink: 0;
+}
+
+.cursor-pos {
+  font-variant-numeric: tabular-nums;
+}
+
+.file-path {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: rtl;
+  text-align: left;
+  font-size: 10px;
 }
 </style>

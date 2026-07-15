@@ -5,7 +5,7 @@ const fileStore = useFileStore();
 </script>
 
 <template>
-  <div class="editor-tabs" v-if="fileStore.tabCount > 1">
+  <div class="editor-tabs">
     <div class="tab-list">
       <div
         v-for="tab in fileStore.tabs"

@@ -9,6 +9,19 @@ const { t, setLocale, locale } = useI18n();
 const emit = defineEmits<{
   close: [];
 }>();
+
+const autoSaveOptions = [
+  { label: '1s', value: 1000 },
+  { label: '3s', value: 3000 },
+  { label: '5s', value: 5000 },
+  { label: '10s', value: 10000 },
+  { label: '30s', value: 30000 },
+];
+
+function setAutoSaveInterval(ms: number) {
+  settings.settings.autoSaveInterval = ms;
+  settings.saveSettings();
+}
 </script>
 
 <template>
@@ -74,6 +87,20 @@ const emit = defineEmits<{
               :class="{ 'btn-primary': settings.settings.autoSave }"
               @click="settings.toggleAutoSave()"
             >{{ settings.settings.autoSave ? t('enabled') : t('disabled') }}</button>
+          </div>
+        </div>
+
+        <!-- Auto Save Interval -->
+        <div class="setting-row" v-if="settings.settings.autoSave">
+          <label>{{ t('auto_save_interval') }}</label>
+          <div class="setting-options">
+            <button
+              v-for="interval in autoSaveOptions"
+              :key="interval.value"
+              class="btn"
+              :class="{ 'btn-primary': settings.settings.autoSaveInterval === interval.value }"
+              @click="setAutoSaveInterval(interval.value)"
+            >{{ interval.label }}</button>
           </div>
         </div>
       </div>
