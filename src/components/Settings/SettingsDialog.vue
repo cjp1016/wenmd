@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useI18n } from '../../composables/useI18n';
+import { invoke } from '@tauri-apps/api/core';
 import type { ThemeMode } from '../../types';
 
 const settings = useSettingsStore();
@@ -22,6 +23,15 @@ function setAutoSaveInterval(ms: number) {
   settings.settings.autoSaveInterval = ms;
   settings.saveSettings();
 }
+
+async function changeLocale(loc: 'zh' | 'en') {
+  setLocale(loc);
+  try {
+    await invoke('set_menu_locale', { locale: loc });
+  } catch {
+    // Not in Tauri environment (browser dev)
+  }
+}
 </script>
 
 <template>
@@ -39,12 +49,12 @@ function setAutoSaveInterval(ms: number) {
             <button
               class="btn"
               :class="{ 'btn-primary': locale === 'zh' }"
-              @click="setLocale('zh')"
+              @click="changeLocale('zh')"
             >中文</button>
             <button
               class="btn"
               :class="{ 'btn-primary': locale === 'en' }"
-              @click="setLocale('en')"
+              @click="changeLocale('en')"
             >English</button>
           </div>
         </div>

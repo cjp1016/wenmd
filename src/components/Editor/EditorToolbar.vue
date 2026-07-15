@@ -67,7 +67,7 @@ onUnmounted(() => {
       <div class="toolbar-divider"></div>
 
       <!-- Format: Bold -->
-      <button class="toolbar-btn" @click="doBold()" :title="t('bold') + ' (⇧⌘B)'">
+      <button class="toolbar-btn" @click="doBold()" :title="t('bold') + ' (' + (isMacOS ? '⌘B' : 'Ctrl+B') + ')'">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
           <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
@@ -75,7 +75,7 @@ onUnmounted(() => {
       </button>
 
       <!-- Format: Italic -->
-      <button class="toolbar-btn" @click="doItalic()" :title="t('italic') + ' (⌘I)'">
+      <button class="toolbar-btn" @click="doItalic()" :title="t('italic') + ' (' + (isMacOS ? '⌘I' : 'Ctrl+I') + ')'">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="19" y1="4" x2="10" y2="4"/>
           <line x1="14" y1="20" x2="5" y2="20"/>
@@ -84,7 +84,7 @@ onUnmounted(() => {
       </button>
 
       <!-- Format: Inline Code -->
-      <button class="toolbar-btn" @click="doCode()" :title="t('inline_code') + ' (⌘E)'">
+      <button class="toolbar-btn" @click="doCode()" :title="t('inline_code') + ' (' + (isMacOS ? '⌘E' : 'Ctrl+E') + ')'">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="16,18 22,12 16,6"/>
           <polyline points="8,6 2,12 8,18"/>
@@ -115,7 +115,7 @@ onUnmounted(() => {
       </button>
 
       <!-- Format: Quote -->
-      <button class="toolbar-btn" @click="doQuote()" :title="t('blockquote') + ' (⇧⌘Q)'">
+      <button class="toolbar-btn" @click="doQuote()" :title="t('blockquote') + ' (' + (isMacOS ? '⇧⌘Q' : 'Ctrl+Shift+Q') + ')'">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
           <path d="M10 8c-1.1 0-2 .9-2 2v2c0 1.1.9 2 2 2h2l-2 4h2.5l2-4V10c0-1.1-.9-2-2-2h-2.5z"/>
           <path d="M18 8c-1.1 0-2 .9-2 2v2c0 1.1.9 2 2 2h2l-2 4h2.5l2-4V10c0-1.1-.9-2-2-2h-2.5z"/>
@@ -123,7 +123,7 @@ onUnmounted(() => {
       </button>
 
       <!-- Format: Code Block -->
-      <button class="toolbar-btn" @click="doCodeBlock()" :title="t('code_block') + ' (⇧⌘K)'">
+      <button class="toolbar-btn" @click="doCodeBlock()" :title="t('code_block') + ' (' + (isMacOS ? '⇧⌘K' : 'Ctrl+Shift+K') + ')'">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <rect x="3" y="3" width="18" height="18" rx="2"/>
           <path d="M8 8l-2 4 2 4"/>
@@ -133,7 +133,7 @@ onUnmounted(() => {
       </button>
 
       <!-- Format: Table -->
-      <button class="toolbar-btn" @click="doTable()" :title="t('table') + ' (⌘T)'">
+      <button class="toolbar-btn" @click="doTable()" :title="t('table') + ' (' + (isMacOS ? '⌘T' : 'Ctrl+T') + ')'">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <rect x="3" y="3" width="18" height="18" rx="2"/>
           <line x1="3" y1="9" x2="21" y2="9"/>

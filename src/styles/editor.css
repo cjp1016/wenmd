@@ -11,10 +11,10 @@
   outline: none;
 }
 
-/* Crepe editor wrapper - generous padding like Typora */
+/* Crepe editor wrapper - use full available width to avoid large side gaps */
 .crepe-wrapper {
-  max-width: var(--editor-max-width, 780px);
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   padding: 60px 40px 160px;
   color: var(--editor-text);
   font-size: 15px;
@@ -190,9 +190,10 @@
   margin: 2em 0;
 }
 
-/* Focus mode */
+/* Focus mode - keep a comfortable reading width and center it */
 .focus-mode .crepe-wrapper {
-  max-width: 680px;
+  max-width: 780px;
+  margin: 0 auto;
 }
 
 /* Typewriter mode */

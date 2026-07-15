@@ -51,6 +51,21 @@ export function useShortcut() {
     emitInsertText('\n- [ ] ');
   }
 
+  function focusEditor() {
+    const pmEl = document.querySelector('.ProseMirror') as any;
+    if (pmEl && pmEl.pmViewDesc?.view) {
+      pmEl.pmViewDesc.view.focus();
+    } else if (pmEl) {
+      pmEl.focus();
+    }
+  }
+
+  function isInputElement(target: EventTarget | null): target is HTMLElement {
+    if (!(target instanceof HTMLElement)) return false;
+    const tag = target.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || target.isContentEditable;
+  }
+
   function handleKeyDown(e: KeyboardEvent) {
     // Cmd/Ctrl + O: Open file
     if (mod(e) && e.key === 'o' && !e.shiftKey) {
@@ -89,8 +104,8 @@ export function useShortcut() {
       return;
     }
 
-    // Cmd/Ctrl + B: Toggle sidebar
-    if (mod(e) && e.key === 'b' && !e.shiftKey) {
+    // Cmd/Ctrl + Shift + B: Toggle sidebar
+    if (mod(e) && e.shiftKey && e.key === 'B') {
       e.preventDefault();
       settingsStore.toggleSidebar();
       return;
@@ -138,22 +153,21 @@ export function useShortcut() {
       return;
     }
 
-    // === Editor formatting shortcuts ===
-    const target = e.target as HTMLElement;
-    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
-    if (!target.closest('.ProseMirror')) return;
+    // === Editor formatting shortcuts (standard shortcuts, work globally) ===
+    if (isInputElement(e.target)) return;
 
-    // Cmd/Ctrl + Shift + 1-6: Heading levels
-    if (mod(e) && e.shiftKey && ['1', '2', '3', '4', '5', '6'].includes(e.key)) {
+    // Cmd/Ctrl + B: Bold
+    if (mod(e) && e.key === 'b' && !e.shiftKey) {
       e.preventDefault();
-      const level = parseInt(e.key);
-      emitInsertText('\n' + '#'.repeat(level) + ' ');
+      focusEditor();
+      emitInsertWrap('**', '**');
       return;
     }
 
     // Cmd/Ctrl + I: Italic
     if (mod(e) && e.key === 'i' && !e.shiftKey) {
       e.preventDefault();
+      focusEditor();
       emitInsertWrap('*', '*');
       return;
     }
@@ -161,20 +175,24 @@ export function useShortcut() {
     // Cmd/Ctrl + E: Inline code
     if (mod(e) && e.key === 'e' && !e.shiftKey) {
       e.preventDefault();
+      focusEditor();
       emitInsertWrap('`', '`');
       return;
     }
 
-    // Cmd/Ctrl + Shift + B: Bold
-    if (mod(e) && e.shiftKey && e.key === 'B') {
+    // Cmd/Ctrl + Shift + 1-6: Heading levels
+    if (mod(e) && e.shiftKey && ['1', '2', '3', '4', '5', '6'].includes(e.key)) {
       e.preventDefault();
-      emitInsertWrap('**', '**');
+      focusEditor();
+      const level = parseInt(e.key);
+      emitInsertText('\n' + '#'.repeat(level) + ' ');
       return;
     }
 
     // Cmd/Ctrl + Shift + K: Code block
     if (mod(e) && e.shiftKey && e.key === 'K') {
       e.preventDefault();
+      focusEditor();
       insertCodeBlock();
       return;
     }
@@ -182,6 +200,7 @@ export function useShortcut() {
     // Cmd/Ctrl + T: Insert table
     if (mod(e) && e.key === 't' && !e.shiftKey) {
       e.preventDefault();
+      focusEditor();
       insertTable();
       return;
     }
@@ -189,6 +208,7 @@ export function useShortcut() {
     // Cmd/Ctrl + Shift + Q: Blockquote
     if (mod(e) && e.shiftKey && e.key === 'Q') {
       e.preventDefault();
+      focusEditor();
       insertBlockquote();
       return;
     }
@@ -196,6 +216,7 @@ export function useShortcut() {
     // Cmd/Ctrl + Shift + H: Horizontal rule
     if (mod(e) && e.shiftKey && e.key === 'H') {
       e.preventDefault();
+      focusEditor();
       insertHr();
       return;
     }
@@ -203,6 +224,7 @@ export function useShortcut() {
     // Cmd/Ctrl + Shift + X: Task list
     if (mod(e) && e.shiftKey && e.key === 'X') {
       e.preventDefault();
+      focusEditor();
       insertTaskList();
       return;
     }

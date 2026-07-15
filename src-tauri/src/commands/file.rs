@@ -16,6 +16,12 @@ pub fn open_file(path: String) -> Result<String, String> {
     fs::read_to_string(&path).map_err(|e| format!("Failed to read file: {}", e))
 }
 
+/// Check whether a path is an existing directory.
+#[tauri::command]
+pub fn is_directory(path: String) -> Result<bool, String> {
+    Ok(Path::new(&path).is_dir())
+}
+
 /// Save content to a file at the given path
 #[tauri::command]
 pub fn save_file(path: String, content: String) -> Result<(), String> {

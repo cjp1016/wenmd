@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { listen } from '@tauri-apps/api/event';
+import { invoke } from '@tauri-apps/api/core';
 import { useFileStore } from './stores/fileStore';
 import { useSettingsStore } from './stores/settingsStore';
 import { useEditorStore } from './stores/editorStore';
@@ -7,6 +9,8 @@ import { useTheme } from './composables/useTheme';
 import { useShortcut } from './composables/useShortcut';
 import { useMenuAction } from './composables/useMenuAction';
 import { useI18n } from './composables/useI18n';
+
+const FILE_OPEN_EVENT = 'file-open';
 
 import EditorToolbar from './components/Editor/EditorToolbar.vue';
 import EditorTabs from './components/Editor/EditorTabs.vue';
@@ -23,7 +27,7 @@ const editorStore = useEditorStore();
 useTheme();
 useShortcut();
 useMenuAction();
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const sidebarWidth = ref(settingsStore.settings.sidebarWidth);
 const isDragOver = ref(false);
@@ -102,7 +106,63 @@ onMounted(() => {
   if (fileStore.tabCount === 0) {
     fileStore.newFile();
   }
+
+  // Inform the Rust backend which locale the menu should use.
+  syncMenuLocale();
+
+  // Load any file passed via command-line arguments (e.g. double-click .md).
+  loadInitialFile();
+
+  // Listen for files opened from outside the app while it is already running.
+  let unlistenFileOpen: (() => void) | null = null;
+  listen<string>(FILE_OPEN_EVENT, (event) => {
+    const path = event.payload;
+    if (path) {
+      handleExternalFileOpen(path);
+    }
+  }).then((fn) => {
+    unlistenFileOpen = fn;
+  }).catch(() => {
+    // Not in Tauri environment (browser dev)
+  });
+
+  onUnmounted(() => {
+    if (unlistenFileOpen) unlistenFileOpen();
+  });
 });
+
+async function syncMenuLocale() {
+  try {
+    await invoke('set_menu_locale', { locale: locale.value });
+  } catch {
+    // Not in Tauri environment
+  }
+}
+
+async function loadInitialFile() {
+  try {
+    const path = await invoke<string | null>('get_initial_file');
+    if (path) {
+      await handleExternalFileOpen(path);
+    }
+  } catch {
+    // Not in Tauri environment (browser dev)
+  }
+}
+
+async function handleExternalFileOpen(path: string) {
+  // If a directory was opened, set it as the current workspace folder.
+  try {
+    const isDir = await invoke<boolean>('is_directory', { path });
+    if (isDir) {
+      fileStore.currentFolderPath = path;
+      return;
+    }
+  } catch {
+    // Fall through to open as a file
+  }
+  await fileStore.openFile(path);
+}
 </script>
 
 <template>
@@ -182,7 +242,7 @@ onMounted(() => {
                   <span>{{ t('open_file') }}</span>
                 </div>
                 <div class="shortcut-hint">
-                  <kbd>{{ isMac() ? '⌘' : 'Ctrl' }}</kbd><kbd>B</kbd>
+                  <kbd>{{ isMac() ? '⇧⌘' : 'Ctrl+Shift' }}</kbd><kbd>B</kbd>
                   <span>{{ t('toggle_sidebar') }}</span>
                 </div>
                 <div class="shortcut-hint">
