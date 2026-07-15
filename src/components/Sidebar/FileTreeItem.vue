@@ -97,8 +97,8 @@ function cancelRename() {
 async function deleteFile() {
   closeContextMenu();
   const msg = props.item.is_dir
-    ? t('confirm_delete_folder').replace('{name}', props.item.name)
-    : t('confirm_delete').replace('{name}', props.item.name);
+    ? t.value('confirm_delete_folder').replace('{name}', props.item.name)
+    : t.value('confirm_delete').replace('{name}', props.item.name);
   if (!confirm(msg)) return;
   try {
     await invoke('delete_file', { path: props.item.path });
