@@ -24,7 +24,6 @@ function updateCursorPosition() {
   const view = pmDesc.view;
   try {
     const { from } = view.state.selection;
-    // Calculate line/col from position
     const resolvedPos = view.state.doc.resolve(from);
     cursorLine.value = resolvedPos.line;
     cursorCol.value = from - resolvedPos.start(resolvedPos.depth) + 1;
@@ -36,9 +35,7 @@ function updateCursorPosition() {
 let cursorTimer: ReturnType<typeof setInterval> | null = null;
 
 onMounted(() => {
-  // Poll cursor position every 200ms when focused
   cursorTimer = setInterval(updateCursorPosition, 200);
-  // Also listen for selection changes
   document.addEventListener('selectionchange', updateCursorPosition);
 });
 
@@ -50,37 +47,33 @@ onUnmounted(() => {
 
 <template>
   <div class="status-bar">
-    <!-- Left: save status -->
+    <!-- Left: save status + encoding + file type -->
     <div class="status-left">
-      <span v-if="isSaving" class="status-saving">{{ t('saving') }}</span>
-      <span v-else-if="fileStore.activeTab?.isDirty" class="status-unsaved">{{ t('unsaved') }}</span>
-      <span v-else-if="fileStore.activeTab" class="status-saved">{{ t('saved') }}</span>
+      <div class="status-item status-save">
+        <span class="status-dot" :class="{ saving: isSaving, unsaved: fileStore.activeTab?.isDirty }"></span>
+        <span v-if="isSaving">{{ t('saving') }}</span>
+        <span v-else-if="fileStore.activeTab?.isDirty">{{ t('unsaved') }}</span>
+        <span v-else-if="fileStore.activeTab">{{ t('saved') }}</span>
+      </div>
+      <div class="status-sep"></div>
+      <div class="status-item">UTF-8</div>
+      <div class="status-sep"></div>
+      <div class="status-item">Markdown</div>
     </div>
 
-    <!-- Center: cursor position + stats -->
-    <div class="status-center" v-if="fileStore.activeTab">
-      <span class="status-item cursor-pos">
+    <!-- Right: cursor + stats -->
+    <div class="status-right" v-if="fileStore.activeTab">
+      <div class="status-item cursor-pos">
         {{ t('line') }} {{ cursorLine }}, {{ t('col') }} {{ cursorCol }}
-      </span>
-      <span class="status-divider"></span>
-      <span class="status-item">
+      </div>
+      <div class="status-sep"></div>
+      <div class="status-item">
         {{ editorStore.lineCount }} {{ t('lines') }}
-      </span>
-      <span class="status-divider"></span>
-      <span class="status-item">
+      </div>
+      <div class="status-sep"></div>
+      <div class="status-item">
         {{ editorStore.wordCount }} {{ t('words') }}
-      </span>
-      <span class="status-divider"></span>
-      <span class="status-item">
-        {{ editorStore.charCount }} {{ t('chars') }}
-      </span>
-    </div>
-
-    <!-- Right: file path -->
-    <div class="status-right">
-      <span class="status-item file-path" :title="fileStore.activeTab?.path || ''" v-if="fileStore.activeTab?.path">
-        {{ fileStore.activeTab.path }}
-      </span>
+      </div>
     </div>
   </div>
 </template>
@@ -90,68 +83,76 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 24px;
-  padding: 0 10px;
+  height: 26px;
+  min-height: 26px;
+  padding: 0 12px;
   background: var(--statusbar-bg);
   border-top: 1px solid var(--border-light);
   font-size: 11px;
-  color: var(--text-tertiary);
+  color: var(--text-500);
   flex-shrink: 0;
   user-select: none;
+}
+
+[data-theme="dark"] .status-bar {
+  background: rgba(28, 28, 30, 0.9);
+  border-top-color: rgba(255, 255, 255, 0.06);
 }
 
 .status-left,
 .status-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0;
   min-width: 0;
   flex-shrink: 0;
 }
 
-.status-center {
-  flex: 1;
+.status-item {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-width: 0;
-}
-
-.status-saved {
-  color: var(--success-color);
-}
-
-.status-unsaved {
-  color: var(--warning-color);
-}
-
-.status-saving {
-  color: var(--text-tertiary);
-}
-
-.status-item {
-  color: var(--text-tertiary);
+  gap: 5px;
+  cursor: default;
+  color: var(--text-500);
   white-space: nowrap;
+  padding: 0 4px;
 }
 
-.status-divider {
+.status-save {
+  color: var(--text-secondary);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success-color);
+  flex-shrink: 0;
+}
+
+.status-dot.unsaved {
+  background: var(--warning-color);
+}
+
+.status-dot.saving {
+  background: var(--text-400);
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.status-sep {
   width: 1px;
   height: 10px;
-  background: var(--border-color);
+  background: var(--border-light);
+  margin: 0 6px;
   flex-shrink: 0;
 }
 
 .cursor-pos {
   font-variant-numeric: tabular-nums;
-}
-
-.file-path {
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  direction: rtl;
-  text-align: left;
-  font-size: 10px;
 }
 </style>

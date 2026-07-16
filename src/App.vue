@@ -12,13 +12,12 @@ import { useI18n } from './composables/useI18n';
 
 const FILE_OPEN_EVENT = 'file-open';
 
+import TitleBar from './components/TitleBar/TitleBar.vue';
 import EditorToolbar from './components/Editor/EditorToolbar.vue';
-import EditorTabs from './components/Editor/EditorTabs.vue';
 import MdEditor from './components/Editor/MdEditor.vue';
 import FileSidebar from './components/Sidebar/FileSidebar.vue';
 import StatusBar from './components/StatusBar/StatusBar.vue';
 import FindReplace from './components/FindReplace/FindReplace.vue';
-import OutlinePanel from './components/Outline/OutlinePanel.vue';
 
 const fileStore = useFileStore();
 const settingsStore = useSettingsStore();
@@ -31,6 +30,37 @@ const { t, locale } = useI18n();
 
 const sidebarWidth = ref(settingsStore.settings.sidebarWidth);
 const isDragOver = ref(false);
+const isResizing = ref(false);
+
+const SIDEBAR_MIN = 180;
+const SIDEBAR_MAX = 500;
+
+function onSidebarResizeStart(e: MouseEvent) {
+  e.preventDefault();
+  isResizing.value = true;
+  const startX = e.clientX;
+  const startWidth = sidebarWidth.value;
+
+  function onMouseMove(ev: MouseEvent) {
+    const delta = ev.clientX - startX;
+    const newWidth = Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, startWidth + delta));
+    sidebarWidth.value = newWidth;
+  }
+
+  function onMouseUp() {
+    isResizing.value = false;
+    settingsStore.setSidebarWidth(sidebarWidth.value);
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }
+
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+}
 
 const isMac = () => navigator.platform.toUpperCase().includes('MAC');
 
@@ -185,26 +215,32 @@ async function handleExternalFileOpen(path: string) {
       </div>
     </div>
 
-    <EditorToolbar />
+    <!-- Title bar (app icon, tabs, window controls) -->
+    <TitleBar />
+
     <div class="app-body">
-      <!-- Sidebar with smooth collapse animation (1.3) -->
+      <!-- Sidebar with smooth collapse animation -->
       <div
         class="sidebar-wrapper"
-        :class="{ collapsed: !settingsStore.settings.sidebarVisible }"
+        :class="{ collapsed: !settingsStore.settings.sidebarVisible, resizing: isResizing }"
         :style="settingsStore.settings.sidebarVisible ? sidebarStyle : {}"
       >
         <FileSidebar />
+        <div
+          v-if="settingsStore.settings.sidebarVisible"
+          class="sidebar-resize-handle"
+          @mousedown="onSidebarResizeStart"
+        ></div>
       </div>
 
       <!-- Main editor area -->
       <div class="app-main" :class="editorClass">
-        <EditorTabs />
-        <!-- Horizontal wrapper for editor + outline (1.1) -->
+        <EditorToolbar />
         <div class="editor-content-wrapper">
           <div class="editor-area">
             <FindReplace />
             <MdEditor v-if="fileStore.activeTab" />
-            <!-- Welcome page (2.4) -->
+            <!-- Welcome page -->
             <div v-else class="welcome-page">
               <div class="welcome-brand">
                 <svg class="welcome-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
@@ -252,8 +288,6 @@ async function handleExternalFileOpen(path: string) {
               </div>
             </div>
           </div>
-          <!-- Outline now side-by-side with editor (1.1) -->
-          <OutlinePanel v-if="editorStore.showOutline" />
         </div>
       </div>
     </div>
@@ -262,19 +296,52 @@ async function handleExternalFileOpen(path: string) {
 </template>
 
 <style>
-/* Sidebar: smooth width transition, no opacity jump (1.3) */
+/* Sidebar: smooth width transition, no opacity jump */
 .sidebar-wrapper {
   flex-shrink: 0;
   overflow: hidden;
   display: flex;
+  align-items: stretch;
+  position: relative;
   transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   border-right: 1px solid var(--border-light);
+}
+
+/* Force sidebar component to fill wrapper completely */
+.sidebar-wrapper > .file-sidebar {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Sidebar resize handle */
+.sidebar-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 5;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.sidebar-resize-handle:hover,
+.sidebar-resize-handle:active {
+  background: var(--accent-color);
+  opacity: 0.4;
 }
 
 .sidebar-wrapper.collapsed {
   width: 0 !important;
   pointer-events: none;
   border-right: none;
+}
+
+.sidebar-wrapper.resizing {
+  transition: none;
 }
 
 /* Editor area: column flex inside the row wrapper */
@@ -287,15 +354,15 @@ async function handleExternalFileOpen(path: string) {
   min-width: 0;
 }
 
-/* Horizontal wrapper: editor + outline side by side (1.1) */
+/* Content wrapper */
 .editor-content-wrapper {
   flex: 1;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   overflow: hidden;
 }
 
-/* Focus mode: collapse toolbar, sidebar, statusbar (1.4) */
+/* Focus mode: collapse toolbar, sidebar, statusbar */
 .app-layout.is-focus-mode .editor-toolbar {
   height: 0;
   overflow: hidden;
@@ -321,7 +388,7 @@ async function handleExternalFileOpen(path: string) {
   transition: all 0.3s ease;
 }
 
-/* Drag overlay (2.6) */
+/* Drag overlay */
 .drag-overlay {
   position: fixed;
   top: 0;
@@ -351,7 +418,7 @@ async function handleExternalFileOpen(path: string) {
   background: var(--bg-primary);
 }
 
-/* Welcome page (2.4) */
+/* Welcome page */
 .welcome-page {
   display: flex;
   flex-direction: column;

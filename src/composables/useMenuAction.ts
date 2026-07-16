@@ -45,7 +45,7 @@ export function useMenuAction() {
         settingsStore.toggleSidebar();
         break;
       case 'toggle_outline':
-        editorStore.toggleOutline();
+        editorStore.toggleSourceMode();
         break;
       case 'toggle_focus':
         editorStore.toggleFocusMode();
@@ -64,6 +64,29 @@ export function useMenuAction() {
         break;
 
       // Edit
+      case 'undo':
+        document.execCommand('undo');
+        break;
+      case 'redo':
+        document.execCommand('redo');
+        break;
+      case 'cut':
+        document.execCommand('cut');
+        break;
+      case 'copy':
+        document.execCommand('copy');
+        break;
+      case 'paste':
+        try {
+          const text = await navigator.clipboard.readText();
+          dispatchInsertText(text);
+        } catch {
+          document.execCommand('paste');
+        }
+        break;
+      case 'select_all':
+        document.execCommand('selectAll');
+        break;
       case 'find':
         editorStore.showFindReplace = true;
         break;

@@ -125,10 +125,10 @@ export function useShortcut() {
       return;
     }
 
-    // Cmd/Ctrl + /: Toggle outline
+    // Cmd/Ctrl + /: Toggle source mode
     if (mod(e) && e.key === '/') {
       e.preventDefault();
-      editorStore.toggleOutline();
+      editorStore.toggleSourceMode();
       return;
     }
 

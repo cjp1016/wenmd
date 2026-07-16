@@ -200,22 +200,29 @@ const isActive = () => props.activePath === props.item.path;
   display: flex;
   align-items: center;
   gap: 3px;
-  padding: 3px 8px 3px 0;
+  padding: 4px 8px 4px 0;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--text-secondary);
   white-space: nowrap;
-  transition: background 0.08s;
-  border-radius: 0;
+  transition: all 0.12s ease;
+  border-radius: 5px;
 }
 
 .tree-row:hover {
   background: var(--bg-hover);
+  color: var(--foreground);
 }
 
 .tree-row.active {
   background: var(--accent-light);
-  color: var(--accent-color);
+  color: var(--primary);
+  font-weight: 500;
+}
+
+[data-theme="dark"] .tree-row.active {
+  background: rgba(46, 141, 255, 0.12);
+  color: var(--brand-400);
 }
 
 .tree-arrow {
@@ -224,7 +231,7 @@ const isActive = () => props.activePath === props.item.path;
   justify-content: center;
   width: 12px;
   flex-shrink: 0;
-  color: var(--text-tertiary);
+  color: var(--text-400);
 }
 
 .tree-arrow.placeholder {
@@ -237,11 +244,15 @@ const isActive = () => props.activePath === props.item.path;
   justify-content: center;
   width: 16px;
   flex-shrink: 0;
-  color: var(--text-tertiary);
+  color: var(--text-400);
 }
 
 .tree-row.active .tree-icon {
-  color: var(--accent-color);
+  color: var(--primary);
+}
+
+[data-theme="dark"] .tree-row.active .tree-icon {
+  color: var(--brand-400);
 }
 
 .tree-name {
@@ -253,7 +264,7 @@ const isActive = () => props.activePath === props.item.path;
 .tree-loading {
   padding: 2px 8px;
   font-size: 12px;
-  color: var(--text-tertiary);
+  color: var(--text-400);
 }
 
 .rename-input {
@@ -262,8 +273,9 @@ const isActive = () => props.activePath === props.item.path;
   border: 1px solid var(--accent-color);
   border-radius: 3px;
   background: var(--bg-primary);
-  color: var(--text-primary);
+  color: var(--foreground);
   font-size: 13px;
+  font-family: var(--font-sans);
   outline: none;
   min-width: 0;
 }
@@ -277,8 +289,8 @@ const isActive = () => props.activePath === props.item.path;
   z-index: 9999;
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
   padding: 4px;
   min-width: 140px;
 }
@@ -288,15 +300,16 @@ const isActive = () => props.activePath === props.item.path;
   align-items: center;
   gap: 6px;
   width: 100%;
-  padding: 5px 8px;
+  padding: 6px 10px;
   border: none;
   background: none;
-  color: var(--text-primary);
+  color: var(--foreground);
   font-size: 12px;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 5px;
   transition: background 0.1s;
   text-align: left;
+  font-family: var(--font-sans);
 }
 
 .context-menu-item:hover {

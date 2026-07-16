@@ -30,6 +30,12 @@ struct Labels {
     export_html: &'static str,
     close_tab: &'static str,
     edit: &'static str,
+    undo: &'static str,
+    redo: &'static str,
+    cut: &'static str,
+    copy: &'static str,
+    paste: &'static str,
+    select_all: &'static str,
     find: &'static str,
     find_replace: &'static str,
     view: &'static str,
@@ -71,6 +77,12 @@ fn labels(locale: MenuLocale) -> Labels {
             export_html: "导出为 HTML...",
             close_tab: "关闭标签页",
             edit: "编辑",
+            undo: "撤销",
+            redo: "重做",
+            cut: "剪切",
+            copy: "复制",
+            paste: "粘贴",
+            select_all: "全选",
             find: "查找...",
             find_replace: "查找和替换...",
             view: "视图",
@@ -109,6 +121,12 @@ fn labels(locale: MenuLocale) -> Labels {
             export_html: "Export as HTML...",
             close_tab: "Close Tab",
             edit: "Edit",
+            undo: "Undo",
+            redo: "Redo",
+            cut: "Cut",
+            copy: "Copy",
+            paste: "Paste",
+            select_all: "Select All",
             find: "Find...",
             find_replace: "Find and Replace...",
             view: "View",
@@ -184,13 +202,13 @@ pub fn build_menu(app: &AppHandle, locale: MenuLocale) -> Result<(), Box<dyn std
 
     // --- Edit menu ---
     let edit_submenu = SubmenuBuilder::new(app, t.edit)
-        .undo()
-        .redo()
+        .text("undo", format!("{}\t{}", t.undo, fmt("⌘Z")))
+        .text("redo", format!("{}\t{}", t.redo, fmt("⇧⌘Z")))
         .separator()
-        .cut()
-        .copy()
-        .paste()
-        .select_all()
+        .text("cut", format!("{}\t{}", t.cut, fmt("⌘X")))
+        .text("copy", format!("{}\t{}", t.copy, fmt("⌘C")))
+        .text("paste", format!("{}\t{}", t.paste, fmt("⌘V")))
+        .text("select_all", format!("{}\t{}", t.select_all, fmt("⌘A")))
         .separator()
         .text("find", format!("{}\t{}", t.find, fmt("⌘F")))
         .text("find_replace", format!("{}\t{}", t.find_replace, fmt("⌥⌘F")))

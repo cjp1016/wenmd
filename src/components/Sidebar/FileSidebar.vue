@@ -10,9 +10,13 @@ import type { FileEntry } from '../../types';
 const fileStore = useFileStore();
 const { t } = useI18n();
 
+// Sidebar tab: 'files' or 'outline'
+const activeTab = ref<'files' | 'outline'>('files');
+
 const allFiles = ref<FileEntry[]>([]);
 const currentPath = ref<string | null>(null);
 const searchText = ref('');
+const activeOutlineIndex = ref(-1);
 
 function filterFiles(entries: FileEntry[], query: string): FileEntry[] {
   if (!query) return entries;
@@ -39,6 +43,73 @@ function filterFiles(entries: FileEntry[], query: string): FileEntry[] {
 }
 
 const files = computed(() => filterFiles(allFiles.value, searchText.value));
+
+// Outline items computed from active tab content
+const outlineItems = computed(() => {
+  const content = fileStore.activeTab?.content || '';
+  const lines = content.split('\n');
+  const items: { level: number; text: string; index: number }[] = [];
+
+  for (const line of lines) {
+    const match = line.match(/^(#{1,6})\s+(.+)/);
+    if (match) {
+      const level = match[1].length;
+      const text = match[2].trim();
+      items.push({ level, text, index: items.length });
+    }
+  }
+
+  return items;
+});
+
+function jumpToHeading(index: number) {
+  activeOutlineIndex.value = index;
+  const targetItem = outlineItems.value[index];
+  if (!targetItem) return;
+
+  const editor = document.querySelector('.ProseMirror');
+  if (!editor) return;
+
+  const headings = editor.querySelectorAll('h1, h2, h3, h4, h5, h6');
+  const targetText = targetItem.text.trim().toLowerCase();
+
+  // Match by text content first
+  let targetEl: Element | null = null;
+  let sameTextCount = 0;
+
+  // Count how many headings before this one have the same text (for duplicate headings)
+  for (let i = 0; i < index; i++) {
+    if (outlineItems.value[i].text.trim().toLowerCase() === targetText) {
+      sameTextCount++;
+    }
+  }
+
+  // Find the Nth heading with matching text
+  let matchCount = 0;
+  for (const h of headings) {
+    const hText = (h.textContent || '').trim().toLowerCase();
+    if (hText === targetText) {
+      if (matchCount === sameTextCount) {
+        targetEl = h;
+        break;
+      }
+      matchCount++;
+    }
+  }
+
+  // Fallback to index-based match
+  if (!targetEl && headings[index]) {
+    targetEl = headings[index];
+  }
+
+  if (targetEl) {
+    targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    (targetEl as HTMLElement).classList.add('outline-highlight');
+    setTimeout(() => {
+      (targetEl as HTMLElement).classList.remove('outline-highlight');
+    }, 1500);
+  }
+}
 
 async function openFolder() {
   const selected = await openDialog({
@@ -97,69 +168,123 @@ onMounted(() => {
 
 <template>
   <div class="file-sidebar">
-    <div class="sidebar-top">
-      <div class="sidebar-search">
-        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="7"/>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    <!-- Icon tab bar for switching between outline and files -->
+    <div class="sidebar-tabs">
+      <button
+        class="sidebar-tab-btn"
+        :class="{ active: activeTab === 'outline' }"
+        @click="activeTab = 'outline'"
+        :title="t('outline')"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="8" y1="6" x2="21" y2="6"/>
+          <line x1="8" y1="12" x2="21" y2="12"/>
+          <line x1="8" y1="18" x2="21" y2="18"/>
+          <line x1="3" y1="6" x2="3.01" y2="6"/>
+          <line x1="3" y1="12" x2="3.01" y2="12"/>
+          <line x1="3" y1="18" x2="3.01" y2="18"/>
         </svg>
-        <input
-          v-model="searchText"
-          class="search-input"
-          :placeholder="t('search_files')"
+      </button>
+      <button
+        class="sidebar-tab-btn"
+        :class="{ active: activeTab === 'files' }"
+        @click="activeTab = 'files'"
+        :title="t('toggle_sidebar')"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="sidebar-body">
+    <!-- Outline panel -->
+    <div class="sidebar-panel" v-show="activeTab === 'outline'">
+      <div class="panel-content">
+        <div
+          v-for="(item, index) in outlineItems"
+          :key="index"
+          class="outline-item"
+          :class="[`outline-level-${item.level}`, { 'is-active': activeOutlineIndex === index }]"
+          @click="jumpToHeading(index)"
+        >
+          <span v-if="item.level > 1" class="outline-dot"></span>
+          {{ item.text }}
+        </div>
+        <div v-if="outlineItems.length === 0" class="sidebar-empty">
+          {{ t('no_headings') }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Files panel -->
+    <div class="sidebar-panel" v-show="activeTab === 'files'">
+      <!-- Search + actions -->
+      <div class="sidebar-top">
+        <div class="sidebar-search">
+          <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="7"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            v-model="searchText"
+            class="search-input"
+            :placeholder="t('search_files')"
+          />
+        </div>
+
+        <div class="sidebar-actions">
+          <button class="sidebar-action-btn" @click="fileStore.newFile()" :title="t('new_file')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+              <path d="M14 3v5h5"/>
+              <line x1="12" y1="11" x2="12" y2="17"/>
+              <line x1="9" y1="14" x2="15" y2="14"/>
+            </svg>
+          </button>
+          <button class="sidebar-action-btn" @click="fileStore.openFile()" :title="t('open_file')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+          </button>
+          <button class="sidebar-action-btn" @click="openFolder()" :title="currentPath ? t('change_folder') : t('open_folder')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            </svg>
+          </button>
+          <button class="sidebar-action-btn" @click="refreshFiles()" :title="t('refresh')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <polyline points="23,4 23,10 17,10"/>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="sidebar-header" v-if="currentPath">
+        <span class="sidebar-title">{{ folderName() }}</span>
+      </div>
+
+      <div class="panel-content">
+        <FileTreeItem
+          v-for="item in files"
+          :key="item.path"
+          :item="item"
+          :level="0"
+          :active-path="fileStore.activeTab?.path || ''"
+          @open-file="handleOpenFile"
+          @load-children="loadSubDirectory"
+          @refresh="refreshFiles"
         />
-      </div>
-
-      <div class="sidebar-actions">
-        <button class="sidebar-action-btn" @click="fileStore.newFile()" :title="t('new_file')">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
-            <path d="M14 3v5h5"/>
-            <line x1="12" y1="11" x2="12" y2="17"/>
-            <line x1="9" y1="14" x2="15" y2="14"/>
-          </svg>
-        </button>
-        <button class="sidebar-action-btn" @click="fileStore.openFile()" :title="t('open_file')">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-          </svg>
-        </button>
-        <button class="sidebar-action-btn" @click="openFolder()" :title="currentPath ? t('change_folder') : t('open_folder')">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-          </svg>
-        </button>
-        <button class="sidebar-action-btn" @click="refreshFiles()" :title="t('refresh')">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <polyline points="23,4 23,10 17,10"/>
-            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-          </svg>
-        </button>
+        <div v-if="!currentPath" class="sidebar-empty">
+          <p>{{ t('no_folder') }}</p>
+        </div>
+        <div v-else-if="files.length === 0" class="sidebar-empty">
+          <p>{{ searchText ? t('no_results') : t('no_files') }}</p>
+        </div>
       </div>
     </div>
-
-    <div class="sidebar-header" v-if="currentPath">
-      <span class="sidebar-title">{{ folderName() }}</span>
-    </div>
-
-    <div class="sidebar-tree">
-      <FileTreeItem
-        v-for="item in files"
-        :key="item.path"
-        :item="item"
-        :level="0"
-        :active-path="fileStore.activeTab?.path || ''"
-        @open-file="handleOpenFile"
-        @load-children="loadSubDirectory"
-        @refresh="refreshFiles"
-      />
-      <div v-if="!currentPath" class="sidebar-empty">
-        <p>{{ t('no_folder') }}</p>
-      </div>
-      <div v-else-if="files.length === 0" class="sidebar-empty">
-        <p>{{ searchText ? t('no_results') : t('no_files') }}</p>
-      </div>
-    </div>
+    </div><!-- end sidebar-body -->
   </div>
 </template>
 
@@ -167,11 +292,183 @@ onMounted(() => {
 .file-sidebar {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
   height: 100%;
   background: var(--sidebar-bg);
   overflow: hidden;
 }
 
+/* ===== Icon tab bar ===== */
+.sidebar-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.sidebar-tab-btn {
+  width: 32px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-400);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 150ms ease;
+}
+
+.sidebar-tab-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.sidebar-tab-btn.active {
+  background: var(--accent-light);
+  color: var(--accent-color);
+}
+
+[data-theme="dark"] .sidebar-tab-btn.active {
+  background: rgba(46, 141, 255, 0.15);
+  color: var(--brand-400);
+}
+
+/* ===== Sidebar body: fills all space below tabs ===== */
+.sidebar-body {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  position: relative;
+  background: var(--sidebar-bg);
+  overflow: hidden;
+}
+
+/* ===== Panel switching ===== */
+.sidebar-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--sidebar-bg);
+}
+
+.panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 6px;
+  width: 100%;
+  background: var(--sidebar-bg);
+}
+
+.panel-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.panel-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.panel-content::-webkit-scrollbar-thumb {
+  background: var(--background-400);
+  border-radius: 4px;
+}
+
+.panel-content::-webkit-scrollbar-thumb:hover {
+  background: var(--background-500);
+}
+
+/* ===== Outline items ===== */
+.outline-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  margin-bottom: 1px;
+  border-left: 2.5px solid transparent;
+}
+
+.outline-item:hover {
+  background: var(--bg-hover);
+  color: var(--foreground);
+}
+
+.outline-item.is-active {
+  color: var(--primary);
+  border-left-color: var(--primary);
+  font-weight: 600;
+  background: var(--accent-light);
+}
+
+[data-theme="dark"] .outline-item.is-active {
+  color: var(--brand-400);
+  border-left-color: var(--brand-400);
+  background: rgba(46, 141, 255, 0.1);
+}
+
+.outline-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--text-400);
+  flex-shrink: 0;
+}
+
+.outline-item.is-active .outline-dot {
+  background: var(--primary);
+}
+
+.outline-level-1 {
+  padding-left: 12px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.outline-level-2 {
+  padding-left: 20px;
+  font-weight: 500;
+}
+
+.outline-level-3 {
+  padding-left: 34px;
+  font-size: 12px;
+}
+
+.outline-level-4 {
+  padding-left: 48px;
+  font-size: 12px;
+}
+
+.outline-level-5 {
+  padding-left: 60px;
+  font-size: 11.5px;
+}
+
+.outline-level-6 {
+  padding-left: 72px;
+  font-size: 11.5px;
+  color: var(--text-400);
+}
+
+/* ===== Files section (top area) ===== */
 .sidebar-top {
   padding: 8px 10px 4px;
   flex-shrink: 0;
@@ -187,7 +484,7 @@ onMounted(() => {
 .search-icon {
   position: absolute;
   left: 8px;
-  color: var(--text-tertiary);
+  color: var(--text-400);
   pointer-events: none;
 }
 
@@ -197,8 +494,9 @@ onMounted(() => {
   border: 1px solid var(--border-color);
   border-radius: 5px;
   background: var(--bg-primary);
-  color: var(--text-primary);
+  color: var(--foreground);
   font-size: 12px;
+  font-family: var(--font-sans);
   outline: none;
   transition: border-color 0.12s;
 }
@@ -208,7 +506,7 @@ onMounted(() => {
 }
 
 .search-input::placeholder {
-  color: var(--text-tertiary);
+  color: var(--text-400);
 }
 
 .sidebar-actions {
@@ -224,7 +522,7 @@ onMounted(() => {
   height: 28px;
   border: none;
   background: none;
-  color: var(--text-tertiary);
+  color: var(--text-400);
   cursor: pointer;
   border-radius: 5px;
   transition: all 0.12s;
@@ -232,7 +530,7 @@ onMounted(() => {
 
 .sidebar-action-btn:hover {
   background: var(--bg-hover);
-  color: var(--text-primary);
+  color: var(--foreground);
 }
 
 .sidebar-header {
@@ -243,21 +541,22 @@ onMounted(() => {
 .sidebar-title {
   font-size: 11px;
   font-weight: 600;
-  color: var(--text-tertiary);
+  color: var(--text-400);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.sidebar-tree {
-  flex: 1;
-  overflow-y: auto;
-  padding: 2px 0;
-}
-
 .sidebar-empty {
   padding: 20px 12px;
-  color: var(--text-tertiary);
+  color: var(--text-400);
   font-size: 12px;
   text-align: center;
+}
+
+/* ===== Outline highlight animation ===== */
+:deep(.outline-highlight) {
+  background: var(--accent-light) !important;
+  border-radius: 4px;
+  transition: background 0.3s;
 }
 </style>

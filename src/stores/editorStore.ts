@@ -8,7 +8,7 @@ export const useEditorStore = defineStore('editor', () => {
   const isFocusMode = ref(false);
   const isTypewriterMode = ref(false);
   const showFindReplace = ref(false);
-  const showOutline = ref(false);
+  const showSourceMode = ref(false);
 
   function updateStats(content: string) {
     charCount.value = content.length;
@@ -33,8 +33,8 @@ export const useEditorStore = defineStore('editor', () => {
     showFindReplace.value = !showFindReplace.value;
   }
 
-  function toggleOutline() {
-    showOutline.value = !showOutline.value;
+  function toggleSourceMode() {
+    showSourceMode.value = !showSourceMode.value;
   }
 
   return {
@@ -44,11 +44,11 @@ export const useEditorStore = defineStore('editor', () => {
     isFocusMode,
     isTypewriterMode,
     showFindReplace,
-    showOutline,
+    showSourceMode,
     updateStats,
     toggleFocusMode,
     toggleTypewriterMode,
     toggleFindReplace,
-    toggleOutline,
+    toggleSourceMode,
   };
 });
