@@ -262,6 +262,219 @@
   --crepe-color-inline-area: rgba(255, 255, 255, 0.05);
 }
 
+/* ===== SEPIA THEME (macaron cream - eye-friendly) ===== */
+[data-theme="sepia"] {
+  /* Warm brand palette */
+  --brand-50: #faf3e3;
+  --brand-100: #f5e8c8;
+  --brand-200: #ebd5a0;
+  --brand-300: #dfc070;
+  --brand-400: #c69a5a;
+  --brand-500: #b0853f;
+  --brand-600: #9a7030;
+  --brand-700: #7a5a28;
+  --brand-800: #5c4420;
+  --brand-900: #3e2e18;
+
+  /* Warm background scale */
+  --background-50: #fffbf0;
+  --background-100: #faf3e3;
+  --background-200: #f5ecd9;
+  --background-300: #e0d4b6;
+  --background-400: #c9b896;
+  --background-500: #a08a6a;
+  --background-600: #8a7458;
+  --background-700: #6b5a42;
+  --background-800: #4a3a2a;
+  --background-900: #2e2218;
+
+  /* Warm text scale */
+  --text-50: #fffbf0;
+  --text-100: #f5ecd9;
+  --text-200: #e0d4b6;
+  --text-300: #c9b896;
+  --text-400: #a08a6a;
+  --text-500: #8a7458;
+  --text-600: #6b5a42;
+  --text-700: #5a4632;
+  --text-800: #4a3a2a;
+  --text-900: #2e2218;
+
+  /* Warm icon scale */
+  --icon-50: #fffbf0;
+  --icon-100: #f5ecd9;
+  --icon-200: #e0d4b6;
+  --icon-300: #c9b896;
+  --icon-400: #a08a6a;
+  --icon-500: #8a7458;
+  --icon-600: #6b5a42;
+  --icon-700: #5a4632;
+  --icon-800: #4a3a2a;
+  --icon-900: #2e2218;
+
+  /* Core tokens */
+  --background: #f5ecd9;
+  --foreground: #4a3a2a;
+  --card: #faf3e3;
+  --card-foreground: #4a3a2a;
+  --popover: #faf3e3;
+  --popover-foreground: #3a2d20;
+  --primary: #b0853f;
+  --primary-foreground: #fffbf0;
+  --secondary: #ebe0c6;
+  --secondary-foreground: #4a3a2a;
+  --muted: #ebe0c6;
+  --muted-foreground: #8a7458;
+  --accent: #ebe0c6;
+  --accent-foreground: #4a3a2a;
+  --destructive: #c45a4a;
+  --destructive-foreground: #faf3e3;
+  --success: #7aa56a;
+  --success-foreground: #faf3e3;
+  --border: #e0d4b6;
+  --input: #e0d4b6;
+  --ring: #b0853f;
+  --icon: #5a4632;
+  --icon-muted: #a08a6a;
+
+  --sidebar: #ede2c7;
+  --sidebar-foreground: #4a3a2a;
+  --sidebar-primary: #b0853f;
+  --sidebar-primary-foreground: #fffbf0;
+  --sidebar-accent: #e0d4b6;
+  --sidebar-accent-foreground: #4a3a2a;
+  --sidebar-border: #d8c9a8;
+  --sidebar-ring: #b0853f;
+
+  /* Sepia shadows - warm and soft */
+  --shadow-2xs: 0 1px 2px -1px rgba(120, 90, 50, 0.08);
+  --shadow-xs: 0 1px 2px 0 rgba(120, 90, 50, 0.08);
+  --shadow-sm: 0 1px 2px 0 rgba(120, 90, 50, 0.10), 0 1px 3px -1px rgba(120, 90, 50, 0.08);
+  --shadow: 0 2px 4px -1px rgba(120, 90, 50, 0.10), 0 1px 2px -1px rgba(120, 90, 50, 0.08);
+  --shadow-md: 0 4px 8px -2px rgba(120, 90, 50, 0.10), 0 2px 4px -2px rgba(120, 90, 50, 0.08);
+  --shadow-lg: 0 8px 24px -8px rgba(120, 90, 50, 0.12), 0 4px 8px -4px rgba(120, 90, 50, 0.08);
+  --shadow-xl: 0 16px 40px -10px rgba(120, 90, 50, 0.14), 0 8px 16px -8px rgba(120, 90, 50, 0.10);
+  --shadow-2xl: 0 24px 64px -12px rgba(120, 90, 50, 0.16);
+
+  /* Backward-compatible sepia aliases */
+  --bg-primary: var(--background);
+  --bg-secondary: var(--background-100);
+  --bg-tertiary: var(--background-200);
+  --bg-hover: var(--background-200);
+  --bg-active: var(--background-300);
+  --text-primary: var(--foreground);
+  --text-secondary: var(--text-600);
+  --text-tertiary: var(--text-400);
+  --text-quaternary: var(--text-300);
+  --text-inverse: var(--background-50);
+  --border-color: var(--border);
+  --border-light: color-mix(in srgb, var(--border) 60%, transparent);
+  --accent-color: var(--primary);
+  --accent-hover: var(--brand-600);
+  --accent-light: var(--brand-50);
+  --danger-color: var(--state-error);
+  --warning-color: var(--state-warning);
+  --success-color: var(--state-success);
+  --editor-bg: var(--background);
+  --editor-text: var(--foreground);
+  --editor-max-width: 720px;
+  --code-bg: var(--background-200);
+  --code-border: var(--border);
+  --tab-active-bg: var(--background-50);
+  --tab-inactive-bg: var(--background-200);
+  --toolbar-bg: var(--background);
+  --sidebar-bg: var(--sidebar);
+  --statusbar-bg: var(--background-100);
+
+  /* Milkdown Crepe sepia theme */
+  --crepe-color-background: var(--background);
+  --crepe-color-on-background: var(--foreground);
+  --crepe-color-surface: var(--background-100);
+  --crepe-color-surface-low: var(--background-200);
+  --crepe-color-on-surface: var(--foreground);
+  --crepe-color-on-surface-variant: var(--text-600);
+  --crepe-color-outline: var(--text-400);
+  --crepe-color-primary: var(--primary);
+  --crepe-color-secondary: var(--brand-50);
+  --crepe-color-on-secondary: var(--foreground);
+  --crepe-color-inverse: var(--text-800);
+  --crepe-color-on-inverse: var(--background-50);
+  --crepe-color-inline-code: #b8694a;
+  --crepe-color-error: var(--state-error);
+  --crepe-color-hover: var(--background-200);
+  --crepe-color-selected: var(--background-200);
+  --crepe-color-inline-area: var(--background-100);
+}
+
+/* ===== HIGH-SPECIFICITY THEME OVERRIDES ===== */
+/* Override Milkdown theme CSS variables with higher specificity */
+[data-theme="dark"] .milkdown,
+[data-theme="sepia"] .milkdown {
+  --crepe-color-background: var(--background) !important;
+  --crepe-color-on-background: var(--foreground) !important;
+  --crepe-color-surface: var(--background-100) !important;
+  --crepe-color-surface-low: var(--background-200) !important;
+  --crepe-color-on-surface: var(--foreground) !important;
+  --crepe-color-on-surface-variant: var(--text-600) !important;
+  --crepe-color-outline: var(--text-400) !important;
+  --crepe-color-primary: var(--primary) !important;
+  --crepe-color-secondary: var(--brand-50) !important;
+  --crepe-color-on-secondary: var(--foreground) !important;
+  --crepe-color-inverse: var(--text-800) !important;
+  --crepe-color-on-inverse: var(--background-50) !important;
+  --crepe-color-inline-code: var(--state-error) !important;
+  --crepe-color-error: var(--state-error) !important;
+  --crepe-color-hover: var(--background-200) !important;
+  --crepe-color-selected: var(--background-200) !important;
+  --crepe-color-inline-area: var(--background-100) !important;
+}
+
+[data-theme="dark"] .milkdown {
+  --crepe-color-surface: var(--background-800) !important;
+  --crepe-color-surface-low: var(--background-700) !important;
+  --crepe-color-on-surface: var(--text-100) !important;
+  --crepe-color-on-surface-variant: var(--text-300) !important;
+  --crepe-color-outline: var(--text-500) !important;
+  --crepe-color-primary: var(--brand-400) !important;
+  --crepe-color-secondary: rgba(46, 141, 255, 0.15) !important;
+  --crepe-color-on-secondary: var(--text-50) !important;
+  --crepe-color-inverse: var(--text-50) !important;
+  --crepe-color-on-inverse: var(--background-900) !important;
+  --crepe-color-inline-code: #ff9f0a !important;
+  --crepe-color-error: var(--state-error-dark) !important;
+  --crepe-color-hover: rgba(255, 255, 255, 0.06) !important;
+  --crepe-color-selected: rgba(255, 255, 255, 0.08) !important;
+  --crepe-color-inline-area: rgba(255, 255, 255, 0.05) !important;
+}
+
+[data-theme="sepia"] .milkdown {
+  --crepe-color-inline-code: #b8694a !important;
+  --crepe-color-primary: #c69a5a !important;
+}
+
+/* Sepia title bar background */
+[data-theme="sepia"] .title-bar {
+  background: rgba(250, 243, 227, 0.88);
+  border-bottom-color: rgba(176, 133, 63, 0.12);
+}
+
+[data-theme="sepia"] .tab-bar {
+  background: rgba(235, 224, 198, 0.6);
+}
+
+[data-theme="sepia"] .tab-item.active {
+  background: var(--background-50);
+}
+
+/* Sepia editor scrollbar */
+[data-theme="sepia"] .md-editor-container::-webkit-scrollbar-thumb {
+  background: var(--background-400);
+}
+
+[data-theme="sepia"] .md-editor-container::-webkit-scrollbar-thumb:hover {
+  background: var(--background-500);
+}
+
 /* ===== BASE RESET ===== */
 * {
   margin: 0;

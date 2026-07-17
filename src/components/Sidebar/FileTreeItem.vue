@@ -199,10 +199,10 @@ const isActive = () => props.activePath === props.item.path;
 .tree-row {
   display: flex;
   align-items: center;
-  gap: 3px;
-  padding: 4px 8px 4px 0;
+  gap: 4px;
+  padding: 5px 8px 5px 0;
   cursor: pointer;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-secondary);
   white-space: nowrap;
   transition: all 0.12s ease;
@@ -225,24 +225,29 @@ const isActive = () => props.activePath === props.item.path;
   color: var(--brand-400);
 }
 
+[data-theme="sepia"] .tree-row.active {
+  background: rgba(176, 133, 63, 0.12);
+  color: var(--primary);
+}
+
 .tree-arrow {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 12px;
+  width: 14px;
   flex-shrink: 0;
   color: var(--text-400);
 }
 
 .tree-arrow.placeholder {
-  width: 12px;
+  width: 14px;
 }
 
 .tree-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
+  width: 18px;
   flex-shrink: 0;
   color: var(--text-400);
 }
@@ -263,6 +268,10 @@ const isActive = () => props.activePath === props.item.path;
   color: var(--brand-400);
 }
 
+[data-theme="sepia"] .tree-icon.folder-icon {
+  color: var(--brand-500);
+}
+
 .tree-row.active .tree-icon {
   color: var(--primary);
 }
@@ -278,8 +287,8 @@ const isActive = () => props.activePath === props.item.path;
 }
 
 .tree-loading {
-  padding: 2px 8px;
-  font-size: 12px;
+  padding: 3px 8px;
+  font-size: 12.5px;
   color: var(--text-400);
 }
 

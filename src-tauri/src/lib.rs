@@ -6,11 +6,12 @@ use menu::{build_menu, detect_system_locale, handle_menu_event, MenuLocale};
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager};
 
-/// Shared state that keeps track of the currently active menu locale and any
-/// file path passed via command-line arguments.
+/// Shared state that keeps track of the currently active menu locale,
+/// any file path passed via command-line arguments, and recent files.
 struct AppState {
     menu_locale: Mutex<MenuLocale>,
     initial_file: Mutex<Option<String>>,
+    recent_files: Mutex<Vec<String>>,
 }
 
 /// Return the file path passed via CLI when the app was launched, if any.
@@ -18,8 +19,8 @@ struct AppState {
 #[tauri::command]
 fn get_initial_file(app: AppHandle) -> Result<Option<String>, String> {
     let state = app.state::<AppState>();
-    let mut file = state.initial_file.lock().map_err(|e| e.to_string())?;
-    Ok(file.take())
+    let initial = state.initial_file.lock().map_err(|e| e.to_string())?;
+    Ok(initial.clone())
 }
 
 /// Rebuild the native menu bar with the requested locale.
@@ -38,6 +39,25 @@ fn set_menu_locale(app: AppHandle, locale: String) -> Result<(), String> {
     }
 
     build_menu(&app, new_locale).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// Update the recent files list in the native menu bar.
+#[tauri::command]
+fn update_recent_files(app: AppHandle, files: Vec<String>) -> Result<(), String> {
+    {
+        let state = app.state::<AppState>();
+        let mut recent = state.recent_files.lock().map_err(|e| e.to_string())?;
+        *recent = files;
+    }
+
+    let locale = {
+        let state = app.state::<AppState>();
+        let guard = state.menu_locale.lock().map_err(|e| e.to_string())?;
+        *guard
+    };
+
+    build_menu(&app, locale).map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -91,6 +111,7 @@ pub fn run() {
         .manage(AppState {
             menu_locale: Mutex::new(initial_locale),
             initial_file: Mutex::new(find_file_arg()),
+            recent_files: Mutex::new(Vec::new()),
         })
         .invoke_handler(tauri::generate_handler![
             file::open_file,
@@ -104,6 +125,7 @@ pub fn run() {
             export::export_html,
             set_menu_locale,
             get_initial_file,
+            update_recent_files,
         ])
         .setup(move |app| {
             let handle = app.handle().clone();

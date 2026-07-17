@@ -1,6 +1,6 @@
 use tauri::{
     menu::{MenuBuilder, SubmenuBuilder},
-    AppHandle, Emitter,
+    AppHandle, Emitter, Manager,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -34,6 +34,8 @@ struct Labels {
     save_as: &'static str,
     export_html: &'static str,
     close_tab: &'static str,
+    recent_files: &'static str,
+    clear_recent: &'static str,
     edit: &'static str,
     undo: &'static str,
     redo: &'static str,
@@ -86,6 +88,8 @@ fn labels(locale: MenuLocale) -> Labels {
             save_as: "另存为...",
             export_html: "导出为 HTML...",
             close_tab: "关闭标签页",
+            recent_files: "最近打开",
+            clear_recent: "清除最近记录",
             edit: "编辑",
             undo: "撤销",
             redo: "重做",
@@ -135,6 +139,8 @@ fn labels(locale: MenuLocale) -> Labels {
             save_as: "Save As...",
             export_html: "Export as HTML...",
             close_tab: "Close Tab",
+            recent_files: "Recent Files",
+            clear_recent: "Clear Recent",
             edit: "Edit",
             undo: "Undo",
             redo: "Redo",
@@ -172,9 +178,16 @@ fn labels(locale: MenuLocale) -> Labels {
     }
 }
 
-/// Build the native application menu bar with the given locale.
+/// Build the native application menu bar with the given locale and recent files.
 pub fn build_menu(app: &AppHandle, locale: MenuLocale) -> Result<(), Box<dyn std::error::Error>> {
     let t = labels(locale);
+
+    // Get recent files from app state
+    let recent_files: Vec<String> = {
+        let state = app.state::<super::AppState>();
+        let guard = state.recent_files.lock().map_err(|e| e.to_string())?;
+        guard.clone()
+    };
 
     // Helper to format shortcut labels for the current platform.
     // On Windows/Linux we show "Ctrl+Shift+X"; on macOS we keep "⇧⌘X".
@@ -201,7 +214,7 @@ pub fn build_menu(app: &AppHandle, locale: MenuLocale) -> Result<(), Box<dyn std
         .build()?;
 
     // --- File menu ---
-    let file_submenu = SubmenuBuilder::new(app, t.file)
+    let mut file_builder = SubmenuBuilder::new(app, t.file)
         .text("new_file", format!("{}\t{}", t.new_file, fmt("⌘N")))
         .text("open_file", format!("{}\t{}", t.open_file, fmt("⌘O")))
         .separator()
@@ -210,8 +223,25 @@ pub fn build_menu(app: &AppHandle, locale: MenuLocale) -> Result<(), Box<dyn std
         .separator()
         .text("export_html", t.export_html)
         .separator()
-        .text("close_tab", format!("{}\t{}", t.close_tab, fmt("⌘W")))
-        .build()?;
+        .text("close_tab", format!("{}\t{}", t.close_tab, fmt("⌘W")));
+
+    // Add recent files section
+    if !recent_files.is_empty() {
+        file_builder = file_builder.separator();
+        file_builder = file_builder.text("recent_files_header", t.recent_files);
+        for (idx, path) in recent_files.iter().take(10).enumerate() {
+            let file_name = std::path::Path::new(path)
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or(path);
+            let id = format!("open_recent_{}", idx);
+            file_builder = file_builder.text(&id, file_name);
+        }
+        file_builder = file_builder.separator();
+        file_builder = file_builder.text("clear_recent", t.clear_recent);
+    }
+
+    let file_submenu = file_builder.build()?;
 
     // --- Edit menu ---
     let edit_submenu = SubmenuBuilder::new(app, t.edit)
@@ -297,9 +327,30 @@ pub fn handle_menu_event(app: &AppHandle, event: tauri::menu::MenuEvent) {
         "quit" => {
             app.exit(0);
         }
+        "clear_recent" => {
+            if let Some(state) = app.try_state::<super::AppState>() {
+                let _ = state.recent_files.lock().map(|mut recent| recent.clear());
+                let locale = state.menu_locale.lock().map_or(MenuLocale::En, |g| *g);
+                let _ = build_menu(app, locale);
+            }
+            let _ = app.emit("menu-action", "clear_recent");
+        }
         _ => {
-            // Emit a generic "menu-action" event that the frontend listens for
-            let _ = app.emit("menu-action", action);
+            // Handle open_recent_N actions
+            if let Some(idx_str) = action.strip_prefix("open_recent_") {
+                if let Ok(idx) = idx_str.parse::<usize>() {
+                    if let Some(state) = app.try_state::<super::AppState>() {
+                        if let Ok(recent) = state.recent_files.lock() {
+                            if let Some(path) = recent.get(idx).cloned() {
+                                let _ = app.emit("open-recent-file", path);
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Emit a generic "menu-action" event that the frontend listens for
+                let _ = app.emit("menu-action", action);
+            }
         }
     }
 }

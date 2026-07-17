@@ -24,7 +24,7 @@ const { loading } = useEditor((root) => {
     root,
     defaultValue: initialValue,
     features: {
-      [Crepe.Feature.Toolbar]: true,
+      [Crepe.Feature.Toolbar]: false,
       [Crepe.Feature.CodeMirror]: true,
       [Crepe.Feature.Placeholder]: true,
       [Crepe.Feature.ImageBlock]: true,
@@ -32,7 +32,7 @@ const { loading } = useEditor((root) => {
       [Crepe.Feature.LinkTooltip]: true,
       [Crepe.Feature.ListItem]: true,
       [Crepe.Feature.Cursor]: true,
-      [Crepe.Feature.BlockEdit]: true,
+      [Crepe.Feature.BlockEdit]: false,
       [Crepe.Feature.Latex]: false,
       [Crepe.Feature.TopBar]: false,
       [Crepe.Feature.AI]: false,

@@ -140,11 +140,23 @@ export function useMenuAction() {
   }
 
   let unlisten: (() => void) | null = null;
+  let unlistenRecent: (() => void) | null = null;
+  let unlistenClear: (() => void) | null = null;
 
   onMounted(async () => {
     try {
       unlisten = await listen<string>('menu-action', (event) => {
         handleMenuAction(event.payload);
+      });
+
+      unlistenRecent = await listen<string>('open-recent-file', (event) => {
+        fileStore.openFile(event.payload);
+      });
+
+      unlistenClear = await listen<string>('menu-action', (event) => {
+        if (event.payload === 'clear_recent') {
+          fileStore.clearRecentFiles();
+        }
       });
     } catch {
       // Not in Tauri environment (dev mode in browser)
@@ -153,5 +165,7 @@ export function useMenuAction() {
 
   onUnmounted(() => {
     if (unlisten) unlisten();
+    if (unlistenRecent) unlistenRecent();
+    if (unlistenClear) unlistenClear();
   });
 }

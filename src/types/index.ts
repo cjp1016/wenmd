@@ -16,7 +16,7 @@ export interface EditorTab {
   isNew: boolean;
 }
 
-export type ThemeMode = 'light' | 'dark' | 'auto';
+export type ThemeMode = 'light' | 'dark' | 'sepia' | 'auto';
 export type Locale = 'zh' | 'en' | 'auto';
 
 export interface AppSettings {

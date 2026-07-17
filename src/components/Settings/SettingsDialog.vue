@@ -64,7 +64,7 @@ async function changeLocale(loc: 'zh' | 'en') {
           <label>{{ t('theme') }}</label>
           <div class="setting-options">
             <button
-              v-for="mode in ['light', 'dark', 'auto'] as ThemeMode[]"
+              v-for="mode in (['light', 'sepia', 'dark', 'auto'] as ThemeMode[])"
               :key="mode"
               class="btn"
               :class="{ 'btn-primary': settings.settings.theme === mode }"

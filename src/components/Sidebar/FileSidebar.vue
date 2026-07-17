@@ -111,16 +111,20 @@ function jumpToHeading(index: number) {
   }
 }
 
-async function openFolder() {
-  const selected = await openDialog({
-    directory: true,
-    multiple: false,
-  });
-  if (!selected) return;
+async function openFolder(folderPath?: string) {
+  let path = folderPath;
+  if (!path) {
+    const selected = await openDialog({
+      directory: true,
+      multiple: false,
+    });
+    if (!selected) return;
+    path = selected as string;
+  }
 
-  const path = selected as string;
   currentPath.value = path;
   fileStore.currentFolderPath = path;
+  fileStore.addRecentFolder(path);
   await loadDirectory(path);
 }
 
@@ -262,6 +266,61 @@ onMounted(() => {
         </div>
       </div>
 
+      <!-- Recent files -->
+      <div class="recent-section" v-if="fileStore.recentFiles.length > 0 && !currentPath">
+        <div class="recent-header">
+          <span class="recent-title">{{ t('recent_files') }}</span>
+          <button class="recent-clear" @click="fileStore.clearRecentFiles()" :title="t('clear_recent')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3,6 5,6 21,6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+          </button>
+        </div>
+        <div class="recent-list">
+          <button
+            v-for="path in fileStore.recentFiles.slice(0, 5)"
+            :key="path"
+            class="recent-item"
+            @click="fileStore.openFile(path)"
+            :title="path"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+              <path d="M14 3v5h5"/>
+            </svg>
+            <span class="recent-item-name">{{ path.split(/[/\\]/).pop() }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Recent folders -->
+      <div class="recent-section" v-if="fileStore.recentFolders.length > 0 && !currentPath">
+        <div class="recent-header">
+          <span class="recent-title">{{ t('recent_folders') }}</span>
+          <button class="recent-clear" @click="fileStore.clearRecentFolders()" :title="t('clear_recent')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3,6 5,6 21,6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+          </button>
+        </div>
+        <div class="recent-list">
+          <button
+            v-for="path in fileStore.recentFolders.slice(0, 5)"
+            :key="path"
+            class="recent-item"
+            @click="openFolder(path)"
+            :title="path"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
+            </svg>
+            <span class="recent-item-name">{{ path.split(/[/\\]/).pop() || path }}</span>
+          </button>
+        </div>
+      </div>
+
       <div class="sidebar-header" v-if="currentPath">
         <span class="sidebar-title">{{ folderName() }}</span>
       </div>
@@ -277,10 +336,10 @@ onMounted(() => {
           @load-children="loadSubDirectory"
           @refresh="refreshFiles"
         />
-        <div v-if="!currentPath" class="sidebar-empty">
+        <div v-if="!currentPath && fileStore.recentFiles.length === 0 && fileStore.recentFolders.length === 0" class="sidebar-empty">
           <p>{{ t('no_folder') }}</p>
         </div>
-        <div v-else-if="files.length === 0" class="sidebar-empty">
+        <div v-else-if="currentPath && files.length === 0" class="sidebar-empty">
           <p>{{ searchText ? t('no_results') : t('no_files') }}</p>
         </div>
       </div>
@@ -570,6 +629,89 @@ onMounted(() => {
   color: var(--text-400);
   font-size: 12px;
   text-align: center;
+}
+
+/* ===== Recent items ===== */
+.recent-section {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.recent-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.recent-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-400);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.recent-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-400);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.12s;
+}
+
+.recent-clear:hover {
+  background: var(--bg-hover);
+  color: var(--state-error);
+}
+
+.recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.recent-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 12px;
+  text-align: left;
+  transition: all 0.12s;
+  width: 100%;
+}
+
+.recent-item:hover {
+  background: var(--bg-hover);
+  color: var(--foreground);
+}
+
+.recent-item svg {
+  flex-shrink: 0;
+  color: var(--text-400);
+}
+
+.recent-item:hover svg {
+  color: var(--primary);
+}
+
+.recent-item-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ===== Outline highlight animation ===== */

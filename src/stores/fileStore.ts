@@ -1,19 +1,78 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import type { EditorTab } from '../types';
 import { invoke } from '@tauri-apps/api/core';
 import { open as openDialog, save as saveDialog } from '@tauri-apps/plugin-dialog';
+
+const RECENT_FILES_KEY = 'wenmd_recent_files';
+const RECENT_FOLDERS_KEY = 'wenmd_recent_folders';
+const MAX_RECENT = 20;
+
+function loadRecent(key: string): string[] {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.filter((s) => typeof s === 'string');
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+}
+
+function saveRecent(key: string, items: string[]) {
+  try {
+    localStorage.setItem(key, JSON.stringify(items));
+  } catch {
+    // ignore
+  }
+}
 
 export const useFileStore = defineStore('file', () => {
   const tabs = ref<EditorTab[]>([]);
   const activeTabId = ref<string | null>(null);
   const currentFolderPath = ref<string | null>(null);
+  const recentFiles = ref<string[]>(loadRecent(RECENT_FILES_KEY));
+  const recentFolders = ref<string[]>(loadRecent(RECENT_FOLDERS_KEY));
 
   const activeTab = computed(() =>
     tabs.value.find((t) => t.id === activeTabId.value) || null
   );
 
   const tabCount = computed(() => tabs.value.length);
+
+  function addRecentFile(path: string) {
+    if (!path) return;
+    recentFiles.value = [path, ...recentFiles.value.filter((p) => p !== path)].slice(0, MAX_RECENT);
+    saveRecent(RECENT_FILES_KEY, recentFiles.value);
+  }
+
+  function addRecentFolder(path: string) {
+    if (!path) return;
+    recentFolders.value = [path, ...recentFolders.value.filter((p) => p !== path)].slice(0, MAX_RECENT);
+    saveRecent(RECENT_FOLDERS_KEY, recentFolders.value);
+  }
+
+  function clearRecentFiles() {
+    recentFiles.value = [];
+    localStorage.removeItem(RECENT_FILES_KEY);
+  }
+
+  function clearRecentFolders() {
+    recentFolders.value = [];
+    localStorage.removeItem(RECENT_FOLDERS_KEY);
+  }
+
+  function removeRecentFile(path: string) {
+    recentFiles.value = recentFiles.value.filter((p) => p !== path);
+    saveRecent(RECENT_FILES_KEY, recentFiles.value);
+  }
+
+  function removeRecentFolder(path: string) {
+    recentFolders.value = recentFolders.value.filter((p) => p !== path);
+    saveRecent(RECENT_FOLDERS_KEY, recentFolders.value);
+  }
 
   function generateId(): string {
     return Date.now().toString(36) + Math.random().toString(36).substring(2);
@@ -63,6 +122,7 @@ export const useFileStore = defineStore('file', () => {
       };
       tabs.value.push(tab);
       activeTabId.value = tab.id;
+      addRecentFile(path);
     } catch (e) {
       console.error('Failed to open file:', e);
       alert(`Failed to open file: ${e}`);
@@ -150,10 +210,23 @@ export const useFileStore = defineStore('file', () => {
     }
   }
 
+  // Sync recent files to native menu bar
+  watch(
+    recentFiles,
+    (files) => {
+      invoke('update_recent_files', { files }).catch(() => {
+        // ignore if backend is not ready
+      });
+    },
+    { deep: true }
+  );
+
   return {
     tabs,
     activeTabId,
     currentFolderPath,
+    recentFiles,
+    recentFolders,
     activeTab,
     tabCount,
     newFile,
@@ -163,5 +236,11 @@ export const useFileStore = defineStore('file', () => {
     closeTab,
     switchTab,
     updateContent,
+    addRecentFile,
+    addRecentFolder,
+    clearRecentFiles,
+    clearRecentFolders,
+    removeRecentFile,
+    removeRecentFolder,
   };
 });

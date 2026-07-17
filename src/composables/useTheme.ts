@@ -4,18 +4,18 @@ import type { ThemeMode } from '../types';
 
 export function useTheme() {
   const settings = useSettingsStore();
-  const effectiveTheme = ref<'light' | 'dark'>('light');
+  const effectiveTheme = ref<'light' | 'dark' | 'sepia'>('light');
   let mediaQuery: MediaQueryList | null = null;
   let mediaHandler: ((e: MediaQueryListEvent) => void) | null = null;
 
-  function getEffectiveTheme(mode: ThemeMode): 'light' | 'dark' {
+  function getEffectiveTheme(mode: ThemeMode): 'light' | 'dark' | 'sepia' {
     if (mode === 'auto') {
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
     return mode;
   }
 
-  function applyTheme(theme: 'light' | 'dark') {
+  function applyTheme(theme: 'light' | 'dark' | 'sepia') {
     document.documentElement.setAttribute('data-theme', theme);
     effectiveTheme.value = theme;
   }
