@@ -101,29 +101,89 @@ export function useMenuAction() {
       case 'italic':
         dispatchInsertWrap('*', '*');
         break;
+      case 'underline':
+        dispatchInsertWrap('<u>', '</u>');
+        break;
       case 'inline_code':
         dispatchInsertWrap('`', '`');
         break;
+      case 'inline_formula':
+        dispatchInsertWrap('$', '$');
+        break;
+      case 'strikethrough':
+        dispatchInsertWrap('~~', '~~');
+        break;
+      case 'comment':
+        dispatchInsertWrap('<!--', '-->');
+        break;
+      case 'hyperlink':
+        dispatchInsertWrap('[', '](url)');
+        break;
+      case 'insert_image':
+        dispatchInsertText('\n![](image.png)\n');
+        break;
+      case 'insert_local_image':
+        dispatchInsertText('\n![](local-image.png)\n');
+        break;
+      case 'clear_format':
+        document.execCommand('removeFormat');
+        break;
+
+      // Paragraph - Headings
       case 'heading_1': dispatchInsertText('\n# '); break;
       case 'heading_2': dispatchInsertText('\n## '); break;
       case 'heading_3': dispatchInsertText('\n### '); break;
       case 'heading_4': dispatchInsertText('\n#### '); break;
       case 'heading_5': dispatchInsertText('\n##### '); break;
       case 'heading_6': dispatchInsertText('\n###### '); break;
+      case 'paragraph_text': dispatchInsertText('\n'); break;
+      case 'increase_heading': dispatchInsertText('#'); break;
+      case 'decrease_heading': dispatchInsertText('\n'); break;
+
+      // Paragraph - Blocks
       case 'insert_table':
         dispatchInsertText('\n| Column 1 | Column 2 | Column 3 |\n|----------|----------|----------|\n| Cell | Cell | Cell |\n| Cell | Cell | Cell |\n');
         break;
-      case 'insert_code_block':
+      case 'formula_block':
+        dispatchInsertText('\n$$\n\n$$\n');
+        break;
+      case 'code_block':
         dispatchInsertText('\n```\n\n```\n');
         break;
-      case 'insert_blockquote':
+
+      // Paragraph - Inline
+      case 'blockquote':
         dispatchInsertText('\n> ');
         break;
-      case 'insert_hr':
-        dispatchInsertText('\n---\n');
+      case 'ordered_list':
+        dispatchInsertText('\n1. ');
         break;
-      case 'insert_task_list':
+      case 'unordered_list':
+        dispatchInsertText('\n- ');
+        break;
+      case 'task_list':
         dispatchInsertText('\n- [ ] ');
+        break;
+
+      // Paragraph - Insert
+      case 'insert_paragraph_above':
+        dispatchInsertText('\n\n');
+        break;
+      case 'insert_paragraph_below':
+        dispatchInsertText('\n\n');
+        break;
+
+      // Paragraph - Links
+      case 'link_reference':
+        dispatchInsertText('\n[](url)');
+        break;
+      case 'footnote':
+        dispatchInsertText('\n[^1]: ');
+        break;
+
+      // Paragraph - Other
+      case 'horizontal_rule':
+        dispatchInsertText('\n---\n');
         break;
 
       // Settings

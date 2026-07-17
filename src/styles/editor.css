@@ -31,12 +31,13 @@
 
 /* Crepe editor wrapper - Typora-inspired wide reading area */
 .crepe-wrapper {
-  max-width: 960px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 32px 40px 200px;
+  padding: 32px 60px 100px;
   color: var(--editor-text);
-  font-size: 15px;
-  line-height: 1.7;
+  font-size: var(--font-size, 15px);
+  font-family: var(--font-family, var(--font-sans));
+  line-height: 1.75;
   background: var(--editor-bg);
   min-height: 100%;
 }
@@ -57,8 +58,8 @@
 }
 
 .ProseMirror p {
-  margin: 0 0 12px;
-  line-height: 1.75;
+  margin: 0 0 16px;
+  line-height: 1.8;
 }
 
 /* Headings - matching design spec, slightly tighter than before */
@@ -115,33 +116,47 @@
 
 /* Code blocks */
 .ProseMirror pre {
-  background: var(--code-bg);
-  border: 1px solid var(--code-border);
-  border-radius: 8px;
+  background: rgba(244, 244, 244, 0.8);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
   padding: 14px 16px;
   overflow-x: auto;
-  margin: 0 0 14px;
+  margin: 12px 0;
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 0.85em;
   line-height: 1.6;
-  color: var(--editor-text);
+  color: var(--foreground);
+}
+
+[data-theme="dark"] .ProseMirror pre {
+  background: rgba(40, 40, 48, 0.9);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-100);
+}
+
+[data-theme="sepia"] .ProseMirror pre {
+  background: rgba(235, 224, 200, 0.6);
+  border-color: rgba(200, 180, 150, 0.4);
+  color: #4a3a2a;
 }
 
 .ProseMirror code {
   font-family: var(--font-mono);
-  background: var(--code-bg);
-  border-radius: 4px;
-  padding: 1px 5px;
+  background: rgba(175, 184, 193, 0.3);
+  border-radius: 3px;
+  padding: 1px 4px;
   font-size: 0.88em;
-  color: var(--crepe-color-inline-code, var(--state-error));
+  color: #5c6bc0;
 }
 
 [data-theme="dark"] .ProseMirror code {
-  color: #ff9f0a;
+  background: rgba(255, 255, 255, 0.08);
+  color: #90caf9;
 }
 
 [data-theme="sepia"] .ProseMirror code {
-  color: #b8694a;
+  background: rgba(200, 180, 150, 0.3);
+  color: #7a5a3a;
 }
 
 .ProseMirror pre code {
@@ -151,43 +166,37 @@
   color: inherit;
 }
 
-[data-theme="dark"] .ProseMirror pre code {
-  color: var(--chart-3, #ff9f0a);
-}
-
-[data-theme="sepia"] .ProseMirror pre code {
-  color: #6b4a2a;
-}
-
 /* Blockquotes */
 .ProseMirror blockquote {
-  border-left: 3px solid var(--primary);
-  padding: 6px 14px;
-  margin: 0 0 14px;
+  border-left: 3px solid var(--text-400);
+  padding: 8px 16px;
+  margin: 0 0 16px;
   color: var(--text-secondary);
-  background: var(--accent);
-  border-radius: 0 6px 6px 0;
+  background: transparent;
+  border-radius: 0;
   font-style: normal;
 }
 
-/* Tables */
+/* Tables - Typora-style */
 .ProseMirror table {
   border-collapse: collapse;
   width: 100%;
-  margin: 0 0 14px;
+  margin: 16px 0;
   overflow: hidden;
-  font-size: 14px;
+  font-size: 0.9em;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
 }
 
 .ProseMirror th,
 .ProseMirror td {
   border: 1px solid var(--border-color);
-  padding: 7px 12px;
+  padding: 8px 12px;
   text-align: left;
 }
 
 .ProseMirror th {
-  background: var(--bg-secondary);
+  background: rgba(200, 200, 200, 0.2);
   font-weight: 600;
   color: var(--foreground);
 }
@@ -196,21 +205,42 @@
   color: var(--text-secondary);
 }
 
-[data-theme="sepia"] .ProseMirror th {
-  background: #ebe0c6;
+.ProseMirror tr:nth-child(even) td {
+  background: rgba(200, 200, 200, 0.1);
 }
 
-[data-theme="sepia"] .ProseMirror td {
-  background: transparent;
+[data-theme="dark"] .ProseMirror table {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .ProseMirror th,
+[data-theme="dark"] .ProseMirror td {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .ProseMirror th {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .ProseMirror tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 [data-theme="sepia"] .ProseMirror table {
-  border-color: #d8c9a8;
+  border-color: rgba(200, 180, 150, 0.4);
 }
 
 [data-theme="sepia"] .ProseMirror th,
 [data-theme="sepia"] .ProseMirror td {
-  border-color: #d8c9a8;
+  border-color: rgba(200, 180, 150, 0.4);
+}
+
+[data-theme="sepia"] .ProseMirror th {
+  background: rgba(200, 180, 150, 0.25);
+}
+
+[data-theme="sepia"] .ProseMirror tr:nth-child(even) td {
+  background: rgba(200, 180, 150, 0.15);
 }
 
 /* Lists */
@@ -320,6 +350,55 @@
   opacity: 0 !important;
   pointer-events: none !important;
   visibility: hidden !important;
+}
+
+/* ===== Crepe theme code block overrides ===== */
+.crepe-wrapper .milkdown-code-block {
+  background: rgba(244, 244, 244, 0.8) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 4px !important;
+}
+
+[data-theme="dark"] .crepe-wrapper .milkdown-code-block {
+  background: rgba(40, 40, 48, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="sepia"] .crepe-wrapper .milkdown-code-block {
+  background: rgba(235, 224, 200, 0.6) !important;
+  border-color: rgba(200, 180, 150, 0.4) !important;
+}
+
+/* Code block language picker - Typora-style */
+.crepe-wrapper .milkdown-code-block .language-picker {
+  display: none;
+}
+
+.crepe-wrapper .milkdown-code-block:hover .language-picker {
+  display: flex;
+}
+
+/* Hide line numbers in code blocks */
+.crepe-wrapper .milkdown-code-block .cm-gutters,
+.crepe-wrapper .milkdown-code-block .cm-lineNumbers {
+  display: none !important;
+}
+
+/* CodeMirror editor inside code blocks */
+.crepe-wrapper .milkdown-code-block .cm-editor {
+  font-family: var(--font-mono) !important;
+  font-size: 0.85em !important;
+  line-height: 1.6 !important;
+}
+
+[data-theme="dark"] .crepe-wrapper .milkdown-code-block .cm-editor {
+  background: transparent !important;
+  color: var(--text-100) !important;
+}
+
+[data-theme="sepia"] .crepe-wrapper .milkdown-code-block .cm-editor {
+  background: transparent !important;
+  color: #4a3a2a !important;
 }
 
 /* Hide the slash menu trigger area (still allow Ctrl+/ shortcut) */

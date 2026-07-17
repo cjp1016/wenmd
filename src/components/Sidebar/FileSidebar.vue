@@ -239,7 +239,7 @@ onMounted(() => {
 
         <div class="sidebar-actions">
           <button class="sidebar-action-btn action-new-file" @click="fileStore.newFile()" :title="t('new_file')">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
               <path d="M14 3v5h5"/>
               <line x1="12" y1="11" x2="12" y2="17"/>
@@ -247,18 +247,18 @@ onMounted(() => {
             </svg>
           </button>
           <button class="sidebar-action-btn action-open-file" @click="fileStore.openFile()" :title="t('open_file')">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
               <path d="M14 3v5h5"/>
             </svg>
           </button>
           <button class="sidebar-action-btn action-open-folder" @click="openFolder()" :title="currentPath ? t('change_folder') : t('open_folder')">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
             </svg>
           </button>
           <button class="sidebar-action-btn action-refresh" @click="refreshFiles()" :title="t('refresh')">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="23,4 23,10 17,10"/>
               <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
             </svg>
@@ -285,7 +285,7 @@ onMounted(() => {
             @click="fileStore.openFile(path)"
             :title="path"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
               <path d="M14 3v5h5"/>
             </svg>
@@ -313,7 +313,7 @@ onMounted(() => {
             @click="openFolder(path)"
             :title="path"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
             </svg>
             <span class="recent-item-name">{{ path.split(/[/\\]/).pop() || path }}</span>
@@ -371,8 +371,8 @@ onMounted(() => {
 }
 
 .sidebar-tab-btn {
-  width: 32px;
-  height: 28px;
+  width: 36px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -405,7 +405,7 @@ onMounted(() => {
   min-height: 0;
   width: 100%;
   position: relative;
-  background: var(--sidebar-bg);
+  background: var(--bg-primary);
   overflow: hidden;
 }
 
@@ -419,15 +419,15 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--sidebar-bg);
+  background: var(--bg-primary);
 }
 
 .panel-content {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 6px;
+  padding: 8px 0;
   width: 100%;
-  background: var(--sidebar-bg);
+  background: var(--bg-primary);
 }
 
 .panel-content::-webkit-scrollbar {
@@ -454,7 +454,7 @@ onMounted(() => {
   gap: 6px;
   padding: 5px 10px;
   border-radius: 5px;
-  font-size: 12.5px;
+  font-size: 0.85em;
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.12s ease;
@@ -499,7 +499,7 @@ onMounted(() => {
 .outline-level-1 {
   padding-left: 12px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 1em;
 }
 
 .outline-level-2 {
@@ -509,22 +509,22 @@ onMounted(() => {
 
 .outline-level-3 {
   padding-left: 34px;
-  font-size: 12px;
+  font-size: 0.95em;
 }
 
 .outline-level-4 {
   padding-left: 48px;
-  font-size: 12px;
+  font-size: 0.95em;
 }
 
 .outline-level-5 {
   padding-left: 60px;
-  font-size: 11.5px;
+  font-size: 0.9em;
 }
 
 .outline-level-6 {
   padding-left: 72px;
-  font-size: 11.5px;
+  font-size: 0.9em;
   color: var(--text-400);
 }
 
@@ -550,13 +550,14 @@ onMounted(() => {
 
 .search-input {
   width: 100%;
-  padding: 5px 8px 5px 28px;
-  border: 1px solid var(--border-color);
-  border-radius: 5px;
-  background: var(--bg-primary);
+  padding: 6px 8px 6px 28px;
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 0;
+  background: transparent;
   color: var(--foreground);
-  font-size: 12px;
-  font-family: var(--font-sans);
+  font-size: 13px;
+  font-family: var(--font-family, var(--font-sans));
   outline: none;
   transition: border-color 0.12s;
 }
@@ -571,7 +572,7 @@ onMounted(() => {
 
 .sidebar-actions {
   display: flex;
-  gap: 2px;
+  gap: 4px;
 }
 
 .sidebar-action-btn {
@@ -584,7 +585,7 @@ onMounted(() => {
   background: none;
   color: var(--text-400);
   cursor: pointer;
-  border-radius: 5px;
+  border-radius: 4px;
   transition: all 0.12s;
 }
 
@@ -594,21 +595,12 @@ onMounted(() => {
 }
 
 .sidebar-action-btn.action-open-folder {
-  color: var(--brand-500);
+  color: var(--text-secondary);
 }
 
 .sidebar-action-btn.action-open-folder:hover {
-  background: var(--brand-50);
-  color: var(--brand-600);
-}
-
-[data-theme="dark"] .sidebar-action-btn.action-open-folder {
-  color: var(--brand-400);
-}
-
-[data-theme="dark"] .sidebar-action-btn.action-open-folder:hover {
-  background: rgba(46, 141, 255, 0.15);
-  color: var(--brand-300);
+  background: var(--bg-hover);
+  color: var(--foreground);
 }
 
 .sidebar-header {
@@ -681,14 +673,15 @@ onMounted(() => {
 .recent-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 6px;
+  gap: 8px;
+  padding: 6px 8px;
   border: none;
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: 5px;
+  font-size: 0.9em;
+  font-family: var(--font-family, var(--font-sans));
   text-align: left;
   transition: all 0.12s;
   width: 100%;

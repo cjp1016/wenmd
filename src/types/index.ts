@@ -22,6 +22,7 @@ export type Locale = 'zh' | 'en' | 'auto';
 export interface AppSettings {
   theme: ThemeMode;
   fontSize: number;
+  fontFamily: string;
   autoSave: boolean;
   autoSaveInterval: number;
   sidebarWidth: number;
@@ -38,6 +39,7 @@ export interface OutlineItem {
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'auto',
   fontSize: 16,
+  fontFamily: 'system-ui',
   autoSave: true,
   autoSaveInterval: 3000,
   sidebarWidth: 250,

@@ -307,15 +307,13 @@ function cycleTheme() {
 
 <style scoped>
 .title-bar {
-  height: 40px;
-  min-height: 40px;
+  height: 38px;
+  min-height: 38px;
   display: flex;
   align-items: center;
-  padding: 0 12px;
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 1px solid color-mix(in srgb, var(--background-300) 60%, transparent);
+  padding: 0 16px;
+  background: transparent;
+  border-bottom: 1px solid var(--border-color);
   z-index: 10;
   user-select: none;
   -webkit-app-region: drag;
@@ -323,7 +321,7 @@ function cycleTheme() {
 }
 
 [data-theme="dark"] .title-bar {
-  background: rgba(28, 28, 30, 0.85);
+  background: transparent;
   border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 

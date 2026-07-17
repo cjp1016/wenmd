@@ -51,6 +51,22 @@ export function useShortcut() {
     emitInsertText('\n- [ ] ');
   }
 
+  function insertOrderedList() {
+    emitInsertText('\n1. ');
+  }
+
+  function insertUnorderedList() {
+    emitInsertText('\n- ');
+  }
+
+  function insertLink() {
+    emitInsertText('\n[](url)');
+  }
+
+  function insertFootnote() {
+    emitInsertText('\n[^1]: ');
+  }
+
   function focusEditor() {
     const pmEl = document.querySelector('.ProseMirror') as any;
     if (pmEl && pmEl.pmViewDesc?.view) {
@@ -172,16 +188,72 @@ export function useShortcut() {
       return;
     }
 
-    // Cmd/Ctrl + E: Inline code
-    if (mod(e) && e.key === 'e' && !e.shiftKey) {
+    // Cmd/Ctrl + U: Underline
+    if (mod(e) && e.key === 'u' && !e.shiftKey) {
+      e.preventDefault();
+      focusEditor();
+      emitInsertWrap('<u>', '</u>');
+      return;
+    }
+
+    // Cmd/Ctrl + `: Inline code (Typora style)
+    if (mod(e) && e.key === '`') {
       e.preventDefault();
       focusEditor();
       emitInsertWrap('`', '`');
       return;
     }
 
-    // Cmd/Ctrl + Shift + 1-6: Heading levels
-    if (mod(e) && e.shiftKey && ['1', '2', '3', '4', '5', '6'].includes(e.key)) {
+    // Cmd/Ctrl + M: Inline formula
+    if (mod(e) && e.key === 'm' && !e.shiftKey) {
+      e.preventDefault();
+      focusEditor();
+      emitInsertWrap('$', '$');
+      return;
+    }
+
+    // Cmd/Ctrl + Shift + `: Strikethrough
+    if (mod(e) && e.shiftKey && e.key === '`') {
+      e.preventDefault();
+      focusEditor();
+      emitInsertWrap('~~', '~~');
+      return;
+    }
+
+    // Cmd/Ctrl + -: Comment
+    if (mod(e) && !e.shiftKey && e.key === '-') {
+      e.preventDefault();
+      focusEditor();
+      emitInsertWrap('<!--', '-->');
+      return;
+    }
+
+    // Cmd/Ctrl + K: Hyperlink
+    if (mod(e) && e.key === 'k' && !e.shiftKey) {
+      e.preventDefault();
+      focusEditor();
+      emitInsertWrap('[', '](url)');
+      return;
+    }
+
+    // Cmd/Ctrl + \: Clear formatting
+    if (mod(e) && e.key === '\\') {
+      e.preventDefault();
+      focusEditor();
+      document.execCommand('removeFormat');
+      return;
+    }
+
+    // Cmd/Ctrl + Shift + I: Insert image
+    if (mod(e) && e.shiftKey && e.key === 'I') {
+      e.preventDefault();
+      focusEditor();
+      emitInsertText('\n![](image.png)\n');
+      return;
+    }
+
+    // Cmd/Ctrl + 1-6: Heading levels (Typora style)
+    if (mod(e) && !e.shiftKey && ['1', '2', '3', '4', '5', '6'].includes(e.key)) {
       e.preventDefault();
       focusEditor();
       const level = parseInt(e.key);
@@ -189,8 +261,16 @@ export function useShortcut() {
       return;
     }
 
-    // Cmd/Ctrl + Shift + K: Code block
-    if (mod(e) && e.shiftKey && e.key === 'K') {
+    // Cmd/Ctrl + 0: Paragraph (Typora style)
+    if (mod(e) && !e.shiftKey && e.key === '0') {
+      e.preventDefault();
+      focusEditor();
+      emitInsertText('\n');
+      return;
+    }
+
+    // Cmd/Ctrl + Shift + C: Code block (Typora style)
+    if (mod(e) && e.shiftKey && e.key === 'C') {
       e.preventDefault();
       focusEditor();
       insertCodeBlock();
@@ -213,8 +293,8 @@ export function useShortcut() {
       return;
     }
 
-    // Cmd/Ctrl + Shift + H: Horizontal rule
-    if (mod(e) && e.shiftKey && e.key === 'H') {
+    // Cmd/Ctrl + -: Horizontal rule (Typora style)
+    if (mod(e) && !e.shiftKey && e.key === '-') {
       e.preventDefault();
       focusEditor();
       insertHr();
@@ -226,6 +306,38 @@ export function useShortcut() {
       e.preventDefault();
       focusEditor();
       insertTaskList();
+      return;
+    }
+
+    // Cmd/Ctrl + Shift + O: Ordered list (Typora style)
+    if (mod(e) && e.shiftKey && e.key === 'O') {
+      e.preventDefault();
+      focusEditor();
+      insertOrderedList();
+      return;
+    }
+
+    // Cmd/Ctrl + Shift + U: Unordered list (Typora style)
+    if (mod(e) && e.shiftKey && e.key === 'U') {
+      e.preventDefault();
+      focusEditor();
+      insertUnorderedList();
+      return;
+    }
+
+    // Cmd/Ctrl + Shift + L: Link (Typora style)
+    if (mod(e) && e.shiftKey && e.key === 'L') {
+      e.preventDefault();
+      focusEditor();
+      insertLink();
+      return;
+    }
+
+    // Cmd/Ctrl + Shift + R: Footnote (Typora style)
+    if (mod(e) && e.shiftKey && e.key === 'R') {
+      e.preventDefault();
+      focusEditor();
+      insertFootnote();
       return;
     }
   }

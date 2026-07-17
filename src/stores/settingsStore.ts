@@ -40,6 +40,11 @@ export const useSettingsStore = defineStore('settings', () => {
     saveSettings();
   }
 
+  function setFontFamily(family: string) {
+    settings.value.fontFamily = family;
+    saveSettings();
+  }
+
   function toggleAutoSave() {
     settings.value.autoSave = !settings.value.autoSave;
     saveSettings();
@@ -65,6 +70,7 @@ export const useSettingsStore = defineStore('settings', () => {
     settings,
     setTheme,
     setFontSize,
+    setFontFamily,
     toggleAutoSave,
     setSidebarWidth,
     toggleSidebar,

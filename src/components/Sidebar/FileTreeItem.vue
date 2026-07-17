@@ -116,26 +116,26 @@ const isActive = () => props.activePath === props.item.path;
     <div
       class="tree-row"
       :class="{ active: isActive(), renaming: isRenaming }"
-      :style="{ paddingLeft: `${level * 14 + 10}px` }"
+      :style="{ paddingLeft: `${level * 16 + 10}px` }"
       @click="handleClick"
       @contextmenu="onContextMenu"
     >
       <span class="tree-arrow" v-if="item.is_dir">
-        <svg v-if="isExpanded" width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+        <svg v-if="isExpanded" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
           <path d="M7 10l5 5 5-5z"/>
         </svg>
-        <svg v-else width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+        <svg v-else width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
           <path d="M10 7l5 5-5 5z"/>
         </svg>
       </span>
       <span class="tree-arrow placeholder" v-else></span>
       <span class="tree-icon folder-icon" v-if="item.is_dir">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 7a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
         </svg>
       </span>
       <span class="tree-icon file-icon" v-else>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
           <path d="M14 3v5h5"/>
         </svg>
@@ -199,14 +199,15 @@ const isActive = () => props.activePath === props.item.path;
 .tree-row {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 5px 8px 5px 0;
+  gap: 6px;
+  padding: 5px 12px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
+  font-family: var(--font-family, var(--font-sans));
   color: var(--text-secondary);
   white-space: nowrap;
   transition: all 0.12s ease;
-  border-radius: 5px;
+  border-radius: 0;
 }
 
 .tree-row:hover {
@@ -215,39 +216,39 @@ const isActive = () => props.activePath === props.item.path;
 }
 
 .tree-row.active {
-  background: var(--accent-light);
-  color: var(--primary);
+  background: var(--bg-hover);
+  color: var(--foreground);
   font-weight: 500;
 }
 
 [data-theme="dark"] .tree-row.active {
-  background: rgba(46, 141, 255, 0.12);
-  color: var(--brand-400);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-100);
 }
 
 [data-theme="sepia"] .tree-row.active {
-  background: rgba(176, 133, 63, 0.12);
-  color: var(--primary);
+  background: rgba(176, 133, 63, 0.08);
+  color: var(--foreground);
 }
 
 .tree-arrow {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 14px;
+  width: 16px;
   flex-shrink: 0;
   color: var(--text-400);
 }
 
 .tree-arrow.placeholder {
-  width: 14px;
+  width: 16px;
 }
 
 .tree-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
+  width: 22px;
   flex-shrink: 0;
   color: var(--text-400);
 }

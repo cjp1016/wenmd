@@ -53,21 +53,45 @@ struct Labels {
     zoom_out: &'static str,
     actual_size: &'static str,
     toggle_theme: &'static str,
-    format: &'static str,
+    paragraph: &'static str,
     bold: &'static str,
     italic: &'static str,
+    underline: &'static str,
     inline_code: &'static str,
+    inline_formula: &'static str,
+    strikethrough: &'static str,
+    comment: &'static str,
+    hyperlink: &'static str,
+    link_operations: &'static str,
+    image: &'static str,
+    insert_image: &'static str,
+    insert_local_image: &'static str,
+    clear_format: &'static str,
     heading_1: &'static str,
     heading_2: &'static str,
     heading_3: &'static str,
     heading_4: &'static str,
     heading_5: &'static str,
     heading_6: &'static str,
+    paragraph_text: &'static str,
+    increase_heading: &'static str,
+    decrease_heading: &'static str,
     insert_table: &'static str,
+    formula_block: &'static str,
     code_block: &'static str,
+    code_tools: &'static str,
     blockquote: &'static str,
-    horizontal_rule: &'static str,
+    ordered_list: &'static str,
+    unordered_list: &'static str,
     task_list: &'static str,
+    list_indent: &'static str,
+    insert_paragraph_above: &'static str,
+    insert_paragraph_below: &'static str,
+    link_reference: &'static str,
+    footnote: &'static str,
+    horizontal_rule: &'static str,
+    table_of_contents: &'static str,
+    yaml_front_matter: &'static str,
     window: &'static str,
 }
 
@@ -107,21 +131,45 @@ fn labels(locale: MenuLocale) -> Labels {
             zoom_out: "缩小",
             actual_size: "实际大小",
             toggle_theme: "切换主题",
-            format: "格式",
+            paragraph: "段落",
             bold: "加粗",
             italic: "斜体",
-            inline_code: "行内代码",
-            heading_1: "标题 1",
-            heading_2: "标题 2",
-            heading_3: "标题 3",
-            heading_4: "标题 4",
-            heading_5: "标题 5",
-            heading_6: "标题 6",
-            insert_table: "插入表格",
+            underline: "下划线",
+            inline_code: "代码",
+            inline_formula: "内联公式",
+            strikethrough: "删除线",
+            comment: "注释",
+            hyperlink: "超链接",
+            link_operations: "链接操作",
+            image: "图像",
+            insert_image: "插入图片",
+            insert_local_image: "插入本地图片...",
+            clear_format: "清除样式",
+            heading_1: "一级标题",
+            heading_2: "二级标题",
+            heading_3: "三级标题",
+            heading_4: "四级标题",
+            heading_5: "五级标题",
+            heading_6: "六级标题",
+            paragraph_text: "段落",
+            increase_heading: "提升标题级别",
+            decrease_heading: "降低标题级别",
+            insert_table: "表格",
+            formula_block: "公式块",
             code_block: "代码块",
+            code_tools: "代码工具",
             blockquote: "引用",
-            horizontal_rule: "水平分隔线",
+            ordered_list: "有序列表",
+            unordered_list: "无序列表",
             task_list: "任务列表",
+            list_indent: "列表缩进",
+            insert_paragraph_above: "在上方插入段落",
+            insert_paragraph_below: "在下方插入段落",
+            link_reference: "链接引用",
+            footnote: "脚注",
+            horizontal_rule: "水平分隔线",
+            table_of_contents: "内容目录",
+            yaml_front_matter: "YAML Front Matter",
             window: "窗口",
         },
         MenuLocale::En => Labels {
@@ -158,21 +206,45 @@ fn labels(locale: MenuLocale) -> Labels {
             zoom_out: "Zoom Out",
             actual_size: "Actual Size",
             toggle_theme: "Toggle Theme",
-            format: "Format",
+            paragraph: "Paragraph",
             bold: "Bold",
             italic: "Italic",
-            inline_code: "Inline Code",
+            underline: "Underline",
+            inline_code: "Code",
+            inline_formula: "Inline Math",
+            strikethrough: "Strikethrough",
+            comment: "Comment",
+            hyperlink: "Hyperlink",
+            link_operations: "Link Operations",
+            image: "Image",
+            insert_image: "Insert Image",
+            insert_local_image: "Insert Local Image...",
+            clear_format: "Clear Formatting",
             heading_1: "Heading 1",
             heading_2: "Heading 2",
             heading_3: "Heading 3",
             heading_4: "Heading 4",
             heading_5: "Heading 5",
             heading_6: "Heading 6",
-            insert_table: "Insert Table",
+            paragraph_text: "Paragraph",
+            increase_heading: "Increase Heading Level",
+            decrease_heading: "Decrease Heading Level",
+            insert_table: "Table",
+            formula_block: "Math Block",
             code_block: "Code Block",
+            code_tools: "Code Tools",
             blockquote: "Blockquote",
-            horizontal_rule: "Horizontal Rule",
+            ordered_list: "Ordered List",
+            unordered_list: "Unordered List",
             task_list: "Task List",
+            list_indent: "List Indentation",
+            insert_paragraph_above: "Insert Paragraph Above",
+            insert_paragraph_below: "Insert Paragraph Below",
+            link_reference: "Link Reference",
+            footnote: "Footnote",
+            horizontal_rule: "Horizontal Rule",
+            table_of_contents: "Table of Contents",
+            yaml_front_matter: "YAML Front Matter",
             window: "Window",
         },
     }
@@ -270,24 +342,62 @@ pub fn build_menu(app: &AppHandle, locale: MenuLocale) -> Result<(), Box<dyn std
         .text("toggle_theme", t.toggle_theme)
         .build()?;
 
-    // --- Format menu ---
-    let format_submenu = SubmenuBuilder::new(app, t.format)
+    // --- Paragraph menu (Typora style) ---
+    let paragraph_submenu = SubmenuBuilder::new(app, t.paragraph)
+        .text("heading_1", format!("{}\t{}", t.heading_1, fmt("⌘1")))
+        .text("heading_2", format!("{}\t{}", t.heading_2, fmt("⌘2")))
+        .text("heading_3", format!("{}\t{}", t.heading_3, fmt("⌘3")))
+        .text("heading_4", format!("{}\t{}", t.heading_4, fmt("⌘4")))
+        .text("heading_5", format!("{}\t{}", t.heading_5, fmt("⌘5")))
+        .text("heading_6", format!("{}\t{}", t.heading_6, fmt("⌘6")))
+        .separator()
+        .text("paragraph_text", format!("{}\t{}", t.paragraph_text, fmt("⌘0")))
+        .separator()
+        .text("increase_heading", format!("{}\t{}", t.increase_heading, fmt("⌘+")))
+        .text("decrease_heading", format!("{}\t{}", t.decrease_heading, fmt("⌘-")))
+        .separator()
+        .text("insert_table", t.insert_table)
+        .text("formula_block", format!("{}\t{}", t.formula_block, fmt("⌥⌘B")))
+        .text("code_block", format!("{}\t{}", t.code_block, fmt("⇧⌘C")))
+        .text("code_tools", t.code_tools)
+        .separator()
+        .text("blockquote", format!("{}\t{}", t.blockquote, fmt("⇧⌘Q")))
+        .separator()
+        .text("ordered_list", format!("{}\t{}", t.ordered_list, fmt("⇧⌘O")))
+        .text("unordered_list", format!("{}\t{}", t.unordered_list, fmt("⇧⌘U")))
+        .text("task_list", format!("{}\t{}", t.task_list, fmt("⇧⌘X")))
+        .text("list_indent", t.list_indent)
+        .separator()
+        .text("insert_paragraph_above", t.insert_paragraph_above)
+        .text("insert_paragraph_below", t.insert_paragraph_below)
+        .separator()
+        .text("link_reference", format!("{}\t{}", t.link_reference, fmt("⇧⌘L")))
+        .text("footnote", format!("{}\t{}", t.footnote, fmt("⇧⌘R")))
+        .separator()
+        .text("horizontal_rule", format!("{}\t{}", t.horizontal_rule, fmt("⌘-")))
+        .text("table_of_contents", t.table_of_contents)
+        .text("yaml_front_matter", t.yaml_front_matter)
+        .build()?;
+
+    // --- Format menu (Typora style) ---
+    let format_submenu = SubmenuBuilder::new(app, "格式")
         .text("bold", format!("{}\t{}", t.bold, fmt("⌘B")))
         .text("italic", format!("{}\t{}", t.italic, fmt("⌘I")))
-        .text("inline_code", format!("{}\t{}", t.inline_code, fmt("⌘E")))
+        .text("underline", format!("{}\t{}", t.underline, fmt("⌘U")))
+        .text("inline_code", format!("{}\t{}", t.inline_code, fmt("⌘`")))
         .separator()
-        .text("heading_1", format!("{}\t{}", t.heading_1, fmt("⇧⌘1")))
-        .text("heading_2", format!("{}\t{}", t.heading_2, fmt("⇧⌘2")))
-        .text("heading_3", format!("{}\t{}", t.heading_3, fmt("⇧⌘3")))
-        .text("heading_4", format!("{}\t{}", t.heading_4, fmt("⇧⌘4")))
-        .text("heading_5", format!("{}\t{}", t.heading_5, fmt("⇧⌘5")))
-        .text("heading_6", format!("{}\t{}", t.heading_6, fmt("⇧⌘6")))
+        .text("inline_formula", format!("{}\t{}", t.inline_formula, fmt("⌘M")))
+        .text("strikethrough", format!("{}\t{}", t.strikethrough, fmt("⌘⇧`")))
+        .text("comment", format!("{}\t{}", t.comment, fmt("⌘-")))
         .separator()
-        .text("insert_table", format!("{}\t{}", t.insert_table, fmt("⌘T")))
-        .text("insert_code_block", format!("{}\t{}", t.code_block, fmt("⇧⌘K")))
-        .text("insert_blockquote", format!("{}\t{}", t.blockquote, fmt("⇧⌘Q")))
-        .text("insert_hr", format!("{}\t{}", t.horizontal_rule, fmt("⇧⌘H")))
-        .text("insert_task_list", format!("{}\t{}", t.task_list, fmt("⇧⌘X")))
+        .text("hyperlink", format!("{}\t{}", t.hyperlink, fmt("⌘K")))
+        .text("link_operations", t.link_operations)
+        .separator()
+        .text("image", t.image)
+        .text("insert_image", format!("{}\t{}", t.insert_image, fmt("⌘⇧I")))
+        .text("insert_local_image", t.insert_local_image)
+        .separator()
+        .text("clear_format", format!("{}\t{}", t.clear_format, fmt("⌘\\")))
         .build()?;
 
     // --- Window menu ---
@@ -303,6 +413,7 @@ pub fn build_menu(app: &AppHandle, locale: MenuLocale) -> Result<(), Box<dyn std
         .item(&file_submenu)
         .item(&edit_submenu)
         .item(&view_submenu)
+        .item(&paragraph_submenu)
         .item(&format_submenu)
         .item(&window_submenu)
         .build()?;

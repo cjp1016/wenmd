@@ -88,6 +88,28 @@ async function changeLocale(loc: 'zh' | 'en') {
           </div>
         </div>
 
+        <!-- Font Family -->
+        <div class="setting-row">
+          <label>{{ t('font_family') }}</label>
+          <div class="setting-select">
+            <select
+              :value="settings.settings.fontFamily"
+              @change="settings.setFontFamily(($event.target as HTMLSelectElement).value)"
+              class="font-family-select"
+            >
+              <option value="system-ui">System Default</option>
+              <option value="Inter">Inter</option>
+              <option value="Georgia">Georgia</option>
+              <option value="Courier New">Courier New</option>
+              <option value="Arial">Arial</option>
+              <option value="Microsoft YaHei">Microsoft YaHei</option>
+              <option value="SimSun">SimSun</option>
+              <option value="SimHei">SimHei</option>
+              <option value="PingFang SC">PingFang SC</option>
+            </select>
+          </div>
+        </div>
+
         <!-- Auto Save -->
         <div class="setting-row">
           <label>{{ t('auto_save') }}</label>
@@ -208,5 +230,30 @@ async function changeLocale(loc: 'zh' | 'en') {
 .setting-toggle {
   display: flex;
   gap: 8px;
+}
+
+.setting-select {
+  display: flex;
+}
+
+.font-family-select {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+}
+
+.font-family-select:focus {
+  border-color: var(--accent-color);
+}
+
+.font-family-select option {
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 </style>

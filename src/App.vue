@@ -13,7 +13,6 @@ import { useI18n } from './composables/useI18n';
 const FILE_OPEN_EVENT = 'file-open';
 
 import TitleBar from './components/TitleBar/TitleBar.vue';
-import EditorToolbar from './components/Editor/EditorToolbar.vue';
 import MdEditor from './components/Editor/MdEditor.vue';
 import FileSidebar from './components/Sidebar/FileSidebar.vue';
 import StatusBar from './components/StatusBar/StatusBar.vue';
@@ -73,6 +72,7 @@ const editorClass = computed(() => ({
 
 const fontSizeStyle = computed(() => ({
   '--font-size': `${settingsStore.settings.fontSize}px`,
+  '--font-family': settingsStore.settings.fontFamily,
 }));
 
 const sidebarStyle = computed(() => ({
@@ -242,7 +242,6 @@ async function handleExternalFileOpen(path: string) {
 
       <!-- Main editor area -->
       <div class="app-main" :class="editorClass">
-        <EditorToolbar />
         <div class="editor-content-wrapper">
           <div class="editor-area">
             <FindReplace />
@@ -370,16 +369,7 @@ async function handleExternalFileOpen(path: string) {
   overflow: hidden;
 }
 
-/* Focus mode: collapse toolbar, sidebar, statusbar */
-.app-layout.is-focus-mode .editor-toolbar {
-  height: 0;
-  overflow: hidden;
-  opacity: 0;
-  border: none;
-  padding: 0;
-  transition: all 0.3s ease;
-}
-
+/* Focus mode: collapse sidebar, statusbar */
 .app-layout.is-focus-mode .sidebar-wrapper {
   width: 0 !important;
   overflow: hidden;
