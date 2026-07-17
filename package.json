@@ -7,7 +7,13 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "build:mac": "tauri build --config '{\"bundle\":{\"targets\":[\"app\",\"dmg\"]}}'",
+    "build:mac:dmg": "tauri build --config '{\"bundle\":{\"targets\":[\"dmg\"]}}'",
+    "build:mac:app": "tauri build --config '{\"bundle\":{\"targets\":[\"app\"]}}'",
+    "build:win": "tauri build --config '{\"bundle\":{\"targets\":[\"nsis\",\"msi\"]}}'",
+    "build:win:nsis": "tauri build --config '{\"bundle\":{\"targets\":[\"nsis\"]}}'",
+    "build:win:msi": "tauri build --config '{\"bundle\":{\"targets\":[\"msi\"]}}'"
   },
   "dependencies": {
     "@milkdown/crepe": "^7.21.3",

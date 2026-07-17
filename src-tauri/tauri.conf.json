@@ -28,7 +28,6 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis", "msi"],
     "fileAssociations": [
       {
         "ext": ["md", "markdown", "txt"],

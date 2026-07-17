@@ -26,7 +26,19 @@ function updateCursorPosition() {
     const { from } = view.state.selection;
     const resolvedPos = view.state.doc.resolve(from);
     cursorLine.value = resolvedPos.line;
-    cursorCol.value = from - resolvedPos.start(resolvedPos.depth) + 1;
+
+    const lineContent = view.state.doc.textBetween(
+      resolvedPos.start(resolvedPos.depth),
+      resolvedPos.end(resolvedPos.depth),
+      '',
+      '\0'
+    );
+
+    const lineStartPos = resolvedPos.start(resolvedPos.depth);
+    const offsetInLine = from - lineStartPos;
+    const linePrefix = lineContent.substring(0, offsetInLine);
+
+    cursorCol.value = linePrefix.length + 1;
   } catch {
     // fallback if position resolution fails
   }

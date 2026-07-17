@@ -12,13 +12,24 @@ export const useEditorStore = defineStore('editor', () => {
 
   function updateStats(content: string) {
     charCount.value = content.length;
-    const words = content
-      .replace(/[#*>`~\-\[\]()!_]/g, ' ')
+
+    const chineseChars = (content.match(/[\u4e00-\u9fa5]/g) || []).length;
+    const englishWords = content
+      .replace(/[\u4e00-\u9fa5]/g, ' ')
+      .replace(/[#*>`~\-\[\]()!_\.,;:?'"{}<>]/g, ' ')
       .trim()
       .split(/\s+/)
       .filter((w) => w.length > 0);
-    wordCount.value = words.length;
-    lineCount.value = content.split('\n').length;
+
+    wordCount.value = chineseChars + englishWords.length;
+
+    if (content.length === 0) {
+      lineCount.value = 1;
+    } else if (content.endsWith('\n')) {
+      lineCount.value = content.split('\n').length - 1;
+    } else {
+      lineCount.value = content.split('\n').length;
+    }
   }
 
   function toggleFocusMode() {

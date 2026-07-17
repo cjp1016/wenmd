@@ -129,13 +129,13 @@ const isActive = () => props.activePath === props.item.path;
         </svg>
       </span>
       <span class="tree-arrow placeholder" v-else></span>
-      <span class="tree-icon" v-if="item.is_dir">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+      <span class="tree-icon folder-icon" v-if="item.is_dir">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 7a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
         </svg>
       </span>
-      <span class="tree-icon" v-else>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <span class="tree-icon file-icon" v-else>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
           <path d="M14 3v5h5"/>
         </svg>
@@ -245,6 +245,22 @@ const isActive = () => props.activePath === props.item.path;
   width: 16px;
   flex-shrink: 0;
   color: var(--text-400);
+}
+
+.tree-icon.folder-icon {
+  color: var(--brand-500);
+}
+
+.tree-row.active .tree-icon.folder-icon {
+  color: var(--brand-500);
+}
+
+[data-theme="dark"] .tree-icon.folder-icon {
+  color: var(--brand-400);
+}
+
+[data-theme="dark"] .tree-row.active .tree-icon.folder-icon {
+  color: var(--brand-400);
 }
 
 .tree-row.active .tree-icon {

@@ -234,26 +234,27 @@ onMounted(() => {
         </div>
 
         <div class="sidebar-actions">
-          <button class="sidebar-action-btn" @click="fileStore.newFile()" :title="t('new_file')">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <button class="sidebar-action-btn action-new-file" @click="fileStore.newFile()" :title="t('new_file')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
               <path d="M14 3v5h5"/>
               <line x1="12" y1="11" x2="12" y2="17"/>
               <line x1="9" y1="14" x2="15" y2="14"/>
             </svg>
           </button>
-          <button class="sidebar-action-btn" @click="fileStore.openFile()" :title="t('open_file')">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          <button class="sidebar-action-btn action-open-file" @click="fileStore.openFile()" :title="t('open_file')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+              <path d="M14 3v5h5"/>
             </svg>
           </button>
-          <button class="sidebar-action-btn" @click="openFolder()" :title="currentPath ? t('change_folder') : t('open_folder')">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <button class="sidebar-action-btn action-open-folder" @click="openFolder()" :title="currentPath ? t('change_folder') : t('open_folder')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
             </svg>
           </button>
-          <button class="sidebar-action-btn" @click="refreshFiles()" :title="t('refresh')">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <button class="sidebar-action-btn action-refresh" @click="refreshFiles()" :title="t('refresh')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="23,4 23,10 17,10"/>
               <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
             </svg>
@@ -531,6 +532,24 @@ onMounted(() => {
 .sidebar-action-btn:hover {
   background: var(--bg-hover);
   color: var(--foreground);
+}
+
+.sidebar-action-btn.action-open-folder {
+  color: var(--brand-500);
+}
+
+.sidebar-action-btn.action-open-folder:hover {
+  background: var(--brand-50);
+  color: var(--brand-600);
+}
+
+[data-theme="dark"] .sidebar-action-btn.action-open-folder {
+  color: var(--brand-400);
+}
+
+[data-theme="dark"] .sidebar-action-btn.action-open-folder:hover {
+  background: rgba(46, 141, 255, 0.15);
+  color: var(--brand-300);
 }
 
 .sidebar-header {
