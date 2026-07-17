@@ -22,6 +22,11 @@ impl MenuLocale {
 struct Labels {
     app: &'static str,
     settings: &'static str,
+    about: &'static str,
+    hide_label: &'static str,
+    hide_others_label: &'static str,
+    show_all_label: &'static str,
+    quit_label: &'static str,
     file: &'static str,
     new_file: &'static str,
     open_file: &'static str,
@@ -69,6 +74,11 @@ fn labels(locale: MenuLocale) -> Labels {
         MenuLocale::Zh => Labels {
             app: "WenMd",
             settings: "设置...",
+            about: "关于 WenMd",
+            hide_label: "隐藏 WenMd",
+            hide_others_label: "隐藏其他",
+            show_all_label: "显示全部",
+            quit_label: "退出",
             file: "文件",
             new_file: "新建文件",
             open_file: "打开文件...",
@@ -113,6 +123,11 @@ fn labels(locale: MenuLocale) -> Labels {
         MenuLocale::En => Labels {
             app: "WenMd",
             settings: "Settings...",
+            about: "About WenMd",
+            hide_label: "Hide WenMd",
+            hide_others_label: "Hide Others",
+            show_all_label: "Show All",
+            quit_label: "Quit",
             file: "File",
             new_file: "New File",
             open_file: "Open File...",
@@ -174,17 +189,15 @@ pub fn build_menu(app: &AppHandle, locale: MenuLocale) -> Result<(), Box<dyn std
 
     // --- App submenu (required as first item on macOS) ---
     let app_submenu = SubmenuBuilder::new(app, t.app)
-        .about(None)
+        .text("about", t.about)
         .separator()
         .text("settings", format!("{}\t{}", t.settings, fmt("⌘,")))
         .separator()
-        .services()
+        .text("hide", t.hide_label)
+        .text("hide_others", t.hide_others_label)
+        .text("show_all", t.show_all_label)
         .separator()
-        .hide()
-        .hide_others()
-        .show_all()
-        .separator()
-        .quit()
+        .text("quit", t.quit_label)
         .build()?;
 
     // --- File menu ---
@@ -280,6 +293,13 @@ pub fn detect_system_locale() -> MenuLocale {
 /// Handle native menu events and emit them to the frontend
 pub fn handle_menu_event(app: &AppHandle, event: tauri::menu::MenuEvent) {
     let action = event.id().0.as_str();
-    // Emit a generic "menu-action" event that the frontend listens for
-    let _ = app.emit("menu-action", action);
+    match action {
+        "quit" => {
+            app.exit(0);
+        }
+        _ => {
+            // Emit a generic "menu-action" event that the frontend listens for
+            let _ = app.emit("menu-action", action);
+        }
+    }
 }

@@ -131,6 +131,11 @@ export function useMenuAction() {
         // Emit custom event for toolbar to open settings dialog
         window.dispatchEvent(new CustomEvent('mdview:open-settings'));
         break;
+
+      // About
+      case 'about':
+        window.dispatchEvent(new CustomEvent('mdview:open-about'));
+        break;
     }
   }
 

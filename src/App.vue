@@ -18,6 +18,7 @@ import MdEditor from './components/Editor/MdEditor.vue';
 import FileSidebar from './components/Sidebar/FileSidebar.vue';
 import StatusBar from './components/StatusBar/StatusBar.vue';
 import FindReplace from './components/FindReplace/FindReplace.vue';
+import AboutDialog from './components/About/AboutDialog.vue';
 
 const fileStore = useFileStore();
 const settingsStore = useSettingsStore();
@@ -29,6 +30,7 @@ useMenuAction();
 const { t, locale } = useI18n();
 
 const sidebarWidth = ref(settingsStore.settings.sidebarWidth);
+const showAbout = ref(false);
 const isDragOver = ref(false);
 const isResizing = ref(false);
 
@@ -136,6 +138,11 @@ onMounted(() => {
   if (fileStore.tabCount === 0) {
     fileStore.newFile();
   }
+
+  // Listen for about dialog event
+  window.addEventListener('mdview:open-about', () => {
+    showAbout.value = true;
+  });
 
   // Inform the Rust backend which locale the menu should use.
   syncMenuLocale();
@@ -292,6 +299,7 @@ async function handleExternalFileOpen(path: string) {
       </div>
     </div>
     <StatusBar />
+    <AboutDialog v-if="showAbout" @close="showAbout = false" />
   </div>
 </template>
 

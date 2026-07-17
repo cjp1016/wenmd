@@ -85,6 +85,13 @@ const translations: Record<Locale, Record<string, string>> = {
     'heading_1': 'Heading 1',
     'heading_2': 'Heading 2',
     'heading_3': 'Heading 3',
+    'about_title': 'About WenMd',
+    'about_version': 'Version',
+    'about_author': 'Author',
+    'about_github': 'GitHub Repository',
+    'about_follow': 'Follow',
+    'about_star': 'Star',
+    'about_issue': 'Submit Issue',
   },
   zh: {
     'toggle_sidebar': '切换侧边栏',
@@ -167,6 +174,13 @@ const translations: Record<Locale, Record<string, string>> = {
     'heading_1': '标题 1',
     'heading_2': '标题 2',
     'heading_3': '标题 3',
+    'about_title': '关于 WenMd',
+    'about_version': '版本',
+    'about_author': '作者',
+    'about_github': 'GitHub 仓库',
+    'about_follow': '关注我',
+    'about_star': '点赞支持',
+    'about_issue': '提交问题',
   },
 };
 
