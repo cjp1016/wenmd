@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useFileStore } from './stores/fileStore';
 import { useSettingsStore } from './stores/settingsStore';
 import { useEditorStore } from './stores/editorStore';
@@ -18,6 +19,7 @@ import FileSidebar from './components/Sidebar/FileSidebar.vue';
 import StatusBar from './components/StatusBar/StatusBar.vue';
 import FindReplace from './components/FindReplace/FindReplace.vue';
 import AboutDialog from './components/About/AboutDialog.vue';
+import UnsavedChangesDialog from './components/UnsavedChangesDialog/UnsavedChangesDialog.vue';
 
 const fileStore = useFileStore();
 const settingsStore = useSettingsStore();
@@ -30,8 +32,12 @@ const { t, locale } = useI18n();
 
 const sidebarWidth = ref(settingsStore.settings.sidebarWidth);
 const showAbout = ref(false);
+const showUnsavedChangesDialog = ref(false);
 const isDragOver = ref(false);
 const isResizing = ref(false);
+
+// Pending close action: 'window' or tabId
+let pendingCloseAction: 'window' | null = null;
 
 const SIDEBAR_MIN = 180;
 const SIDEBAR_MAX = 500;
@@ -163,10 +169,62 @@ onMounted(() => {
     // Not in Tauri environment (browser dev)
   });
 
+  // Listen for window close event to prompt for unsaved changes
+  setupWindowCloseHandler();
+
   onUnmounted(() => {
     if (unlistenFileOpen) unlistenFileOpen();
   });
 });
+
+// Handle window close: check for unsaved changes before allowing close
+async function setupWindowCloseHandler() {
+  try {
+    const win = getCurrentWindow();
+    await win.onCloseRequested(async (event) => {
+      if (fileStore.hasUnsavedChanges()) {
+        event.preventDefault();
+        pendingCloseAction = 'window';
+        showUnsavedChangesDialog.value = true;
+      }
+    });
+  } catch {
+    // Not in Tauri environment (browser dev)
+  }
+}
+
+// Dialog handlers
+async function handleSaveAndClose() {
+  showUnsavedChangesDialog.value = false;
+  try {
+    await fileStore.saveAllTabs();
+  } catch (e) {
+    console.error('Failed to save all tabs:', e);
+  }
+  if (pendingCloseAction === 'window') {
+    pendingCloseAction = null;
+    try {
+      await getCurrentWindow().close();
+    } catch {
+      // Ignore
+    }
+  }
+}
+
+function handleCloseWithoutSaving() {
+  showUnsavedChangesDialog.value = false;
+  if (pendingCloseAction === 'window') {
+    pendingCloseAction = null;
+    getCurrentWindow().close().catch(() => {
+      // Ignore
+    });
+  }
+}
+
+function handleCloseCancel() {
+  showUnsavedChangesDialog.value = false;
+  pendingCloseAction = null;
+}
 
 async function syncMenuLocale() {
   try {
@@ -299,6 +357,12 @@ async function handleExternalFileOpen(path: string) {
     </div>
     <StatusBar />
     <AboutDialog v-if="showAbout" @close="showAbout = false" />
+    <UnsavedChangesDialog
+      v-if="showUnsavedChangesDialog"
+      @close="handleCloseCancel"
+      @save-and-close="handleSaveAndClose"
+      @close-without-saving="handleCloseWithoutSaving"
+    />
   </div>
 </template>
 

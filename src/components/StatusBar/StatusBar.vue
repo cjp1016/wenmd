@@ -2,12 +2,10 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useEditorStore } from '../../stores/editorStore';
 import { useFileStore } from '../../stores/fileStore';
-import { useAutoSave } from '../../composables/useAutoSave';
 import { useI18n } from '../../composables/useI18n';
 
 const editorStore = useEditorStore();
 const fileStore = useFileStore();
-const { isSaving } = useAutoSave();
 const { t } = useI18n();
 
 // Cursor position tracking
@@ -62,9 +60,8 @@ onUnmounted(() => {
     <!-- Left: save status + encoding + file type -->
     <div class="status-left">
       <div class="status-item status-save">
-        <span class="status-dot" :class="{ saving: isSaving, unsaved: fileStore.activeTab?.isDirty }"></span>
-        <span v-if="isSaving">{{ t('saving') }}</span>
-        <span v-else-if="fileStore.activeTab?.isDirty">{{ t('unsaved') }}</span>
+        <span class="status-dot" :class="{ unsaved: fileStore.activeTab?.isDirty }"></span>
+        <span v-if="fileStore.activeTab?.isDirty">{{ t('edited') }}</span>
         <span v-else-if="fileStore.activeTab">{{ t('saved') }}</span>
       </div>
       <div class="status-sep"></div>
@@ -144,16 +141,6 @@ onUnmounted(() => {
 
 .status-dot.unsaved {
   background: var(--warning-color);
-}
-
-.status-dot.saving {
-  background: var(--text-400);
-  animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
 }
 
 .status-sep {

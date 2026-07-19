@@ -11,19 +11,6 @@ const emit = defineEmits<{
   close: [];
 }>();
 
-const autoSaveOptions = [
-  { label: '1s', value: 1000 },
-  { label: '3s', value: 3000 },
-  { label: '5s', value: 5000 },
-  { label: '10s', value: 10000 },
-  { label: '30s', value: 30000 },
-];
-
-function setAutoSaveInterval(ms: number) {
-  settings.settings.autoSaveInterval = ms;
-  settings.saveSettings();
-}
-
 async function changeLocale(loc: 'zh' | 'en') {
   setLocale(loc);
   try {
@@ -107,32 +94,6 @@ async function changeLocale(loc: 'zh' | 'en') {
               <option value="SimHei">SimHei</option>
               <option value="PingFang SC">PingFang SC</option>
             </select>
-          </div>
-        </div>
-
-        <!-- Auto Save -->
-        <div class="setting-row">
-          <label>{{ t('auto_save') }}</label>
-          <div class="setting-toggle">
-            <button
-              class="btn"
-              :class="{ 'btn-primary': settings.settings.autoSave }"
-              @click="settings.toggleAutoSave()"
-            >{{ settings.settings.autoSave ? t('enabled') : t('disabled') }}</button>
-          </div>
-        </div>
-
-        <!-- Auto Save Interval -->
-        <div class="setting-row" v-if="settings.settings.autoSave">
-          <label>{{ t('auto_save_interval') }}</label>
-          <div class="setting-options">
-            <button
-              v-for="interval in autoSaveOptions"
-              :key="interval.value"
-              class="btn"
-              :class="{ 'btn-primary': settings.settings.autoSaveInterval === interval.value }"
-              @click="setAutoSaveInterval(interval.value)"
-            >{{ interval.label }}</button>
           </div>
         </div>
       </div>
@@ -225,11 +186,6 @@ async function changeLocale(loc: 'zh' | 'en') {
   border-radius: 50%;
   background: var(--accent-color);
   cursor: pointer;
-}
-
-.setting-toggle {
-  display: flex;
-  gap: 8px;
 }
 
 .setting-select {

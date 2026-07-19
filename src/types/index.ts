@@ -23,8 +23,6 @@ export interface AppSettings {
   theme: ThemeMode;
   fontSize: number;
   fontFamily: string;
-  autoSave: boolean;
-  autoSaveInterval: number;
   sidebarWidth: number;
   sidebarVisible: boolean;
   locale: Locale;
@@ -40,8 +38,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'auto',
   fontSize: 16,
   fontFamily: 'system-ui',
-  autoSave: true,
-  autoSaveInterval: 3000,
   sidebarWidth: 250,
   sidebarVisible: true,
   locale: 'auto',

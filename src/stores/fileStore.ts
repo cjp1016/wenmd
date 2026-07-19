@@ -174,15 +174,14 @@ export const useFileStore = defineStore('file', () => {
     }
   }
 
-  function closeTab(tabId: string) {
+  async function closeTab(tabId: string): Promise<boolean> {
     const idx = tabs.value.findIndex((t) => t.id === tabId);
-    if (idx === -1) return;
+    if (idx === -1) return true;
 
     const tab = tabs.value[idx];
     if (tab.isDirty) {
-      if (!confirm(`"${tab.name}" has unsaved changes. Close anyway?`)) {
-        return;
-      }
+      const confirmed = confirm(`"${tab.name}" ${tab.isNew ? '' : ''}has unsaved changes. Close anyway?`);
+      if (!confirmed) return false;
     }
 
     tabs.value.splice(idx, 1);
@@ -192,6 +191,46 @@ export const useFileStore = defineStore('file', () => {
         activeTabId.value = tabs.value[newIdx].id;
       } else {
         activeTabId.value = null;
+      }
+    }
+    return true;
+  }
+
+  // Check if there are any unsaved tabs
+  function hasUnsavedChanges(): boolean {
+    return tabs.value.some((t) => t.isDirty);
+  }
+
+  // Get all unsaved tabs
+  function getUnsavedTabs(): EditorTab[] {
+    return tabs.value.filter((t) => t.isDirty);
+  }
+
+  // Save all unsaved tabs
+  async function saveAllTabs(): Promise<void> {
+    for (const tab of tabs.value) {
+      if (!tab.isDirty) continue;
+
+      let path = tab.path;
+      if (!path) {
+        // New file: prompt for save location
+        const selected = await saveDialog({
+          defaultPath: tab.name,
+          filters: [{ name: 'Markdown', extensions: ['md'] }],
+        });
+        if (!selected) continue;
+        path = selected;
+      }
+
+      try {
+        await invoke('save_file', { path, content: tab.content });
+        tab.path = path;
+        tab.name = path.split(/[/\\]/).pop() || tab.name;
+        tab.isDirty = false;
+        tab.isNew = false;
+      } catch (e) {
+        console.error(`Failed to save ${tab.name}:`, e);
+        alert(`Failed to save ${tab.name}: ${e}`);
       }
     }
   }
@@ -242,5 +281,8 @@ export const useFileStore = defineStore('file', () => {
     clearRecentFolders,
     removeRecentFile,
     removeRecentFolder,
+    hasUnsavedChanges,
+    getUnsavedTabs,
+    saveAllTabs,
   };
 });

@@ -45,11 +45,6 @@ export const useSettingsStore = defineStore('settings', () => {
     saveSettings();
   }
 
-  function toggleAutoSave() {
-    settings.value.autoSave = !settings.value.autoSave;
-    saveSettings();
-  }
-
   function setSidebarWidth(width: number) {
     settings.value.sidebarWidth = width;
     saveSettings();
@@ -71,7 +66,6 @@ export const useSettingsStore = defineStore('settings', () => {
     setTheme,
     setFontSize,
     setFontFamily,
-    toggleAutoSave,
     setSidebarWidth,
     toggleSidebar,
     saveSettings,
