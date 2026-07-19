@@ -8,7 +8,7 @@ import '@milkdown/crepe/theme/classic.css';
 
 import { useEditorStore } from '../../stores/editorStore';
 import { useFileStore } from '../../stores/fileStore';
-import { INSERT_TEXT_EVENT, INSERT_WRAP_EVENT, REPLACE_TEXT_EVENT, REPLACE_ALL_EVENT } from '../../composables/useShortcut';
+import { INSERT_TEXT_EVENT, INSERT_WRAP_EVENT, REPLACE_TEXT_EVENT, REPLACE_ALL_EVENT, SET_HEADING_EVENT } from '../../composables/useShortcut';
 
 const editorStore = useEditorStore();
 const fileStore = useFileStore();
@@ -171,11 +171,68 @@ function handleReplaceAll(e: Event) {
   }
 }
 
+// Typora-style heading: convert current block to heading level (or paragraph if level=0)
+function handleSetHeading(e: Event) {
+  const ce = e as CustomEvent<number>;
+  const level = ce.detail;
+  const crepe = crepeInstance.value;
+  if (!crepe) return;
+
+  const pmEl = document.querySelector('.ProseMirror') as any;
+  if (!pmEl || !pmEl.pmViewDesc) return;
+  const view = pmEl.pmViewDesc.view;
+  if (!view) return;
+
+  const { state } = view;
+  const { $from } = state.selection;
+
+  // Get the heading node type from the schema
+  const headingType = state.schema.nodes.heading;
+  const paragraphType = state.schema.nodes.paragraph;
+  if (!headingType || !paragraphType) return;
+
+  // Check current block type
+  const currentDepth = $from.depth;
+  const currentNode = $from.node(currentDepth);
+
+  if (level === 0) {
+    // Convert to paragraph
+    if (currentNode.type === paragraphType) return; // Already paragraph
+    const tr = state.tr.setBlockType(
+      $from.before(currentDepth),
+      $from.after(currentDepth),
+      paragraphType
+    );
+    view.dispatch(tr);
+  } else {
+    // Convert to heading of specified level
+    const attrs = { level };
+    // If already same heading level, toggle back to paragraph (Typora behavior)
+    if (currentNode.type === headingType && currentNode.attrs.level === level) {
+      const tr = state.tr.setBlockType(
+        $from.before(currentDepth),
+        $from.after(currentDepth),
+        paragraphType
+      );
+      view.dispatch(tr);
+    } else {
+      const tr = state.tr.setBlockType(
+        $from.before(currentDepth),
+        $from.after(currentDepth),
+        headingType,
+        attrs
+      );
+      view.dispatch(tr);
+    }
+  }
+}
+
 onMounted(() => {
   window.addEventListener(INSERT_TEXT_EVENT, handleInsertText);
   window.addEventListener(INSERT_WRAP_EVENT, handleInsertWrap);
   window.addEventListener(REPLACE_TEXT_EVENT, handleReplaceText);
   window.addEventListener(REPLACE_ALL_EVENT, handleReplaceAll);
+  window.addEventListener(SET_HEADING_EVENT, handleSetHeading);
 
   if (fileStore.tabCount === 0) {
     fileStore.newFile();
@@ -187,6 +244,7 @@ onUnmounted(() => {
   window.removeEventListener(INSERT_WRAP_EVENT, handleInsertWrap);
   window.removeEventListener(REPLACE_TEXT_EVENT, handleReplaceText);
   window.removeEventListener(REPLACE_ALL_EVENT, handleReplaceAll);
+  window.removeEventListener(SET_HEADING_EVENT, handleSetHeading);
 });
 </script>
 

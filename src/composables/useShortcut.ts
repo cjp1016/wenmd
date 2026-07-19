@@ -8,6 +8,7 @@ export const INSERT_TEXT_EVENT = 'mdview:insert-text';
 export const INSERT_WRAP_EVENT = 'mdview:insert-wrap';
 export const REPLACE_TEXT_EVENT = 'mdview:replace-text';
 export const REPLACE_ALL_EVENT = 'mdview:replace-all';
+export const SET_HEADING_EVENT = 'mdview:set-heading';
 
 export function useShortcut() {
   const fileStore = useFileStore();
@@ -41,10 +42,6 @@ export function useShortcut() {
 
   function insertBlockquote() {
     emitInsertText('\n> ');
-  }
-
-  function insertHr() {
-    emitInsertText('\n---\n');
   }
 
   function insertTaskList() {
@@ -169,6 +166,24 @@ export function useShortcut() {
       return;
     }
 
+    // Cmd/Ctrl + 1-6: Heading levels (Typora style - convert current block)
+    // Must be before isInputElement check so it works when editor is focused
+    if (mod(e) && !e.shiftKey && ['1', '2', '3', '4', '5', '6'].includes(e.key)) {
+      e.preventDefault();
+      focusEditor();
+      const level = parseInt(e.key);
+      window.dispatchEvent(new CustomEvent(SET_HEADING_EVENT, { detail: level }));
+      return;
+    }
+
+    // Cmd/Ctrl + 0: Paragraph (Typora style - convert current block to paragraph)
+    if (mod(e) && !e.shiftKey && e.key === '0') {
+      e.preventDefault();
+      focusEditor();
+      window.dispatchEvent(new CustomEvent(SET_HEADING_EVENT, { detail: 0 }));
+      return;
+    }
+
     // === Editor formatting shortcuts (standard shortcuts, work globally) ===
     if (isInputElement(e.target)) return;
 
@@ -196,8 +211,8 @@ export function useShortcut() {
       return;
     }
 
-    // Cmd/Ctrl + `: Inline code (Typora style)
-    if (mod(e) && e.key === '`') {
+    // Cmd/Ctrl + ` or Cmd/Ctrl + E: Inline code (Typora style)
+    if (mod(e) && (e.key === '`' || e.key === 'e') && !e.shiftKey) {
       e.preventDefault();
       focusEditor();
       emitInsertWrap('`', '`');
@@ -217,14 +232,6 @@ export function useShortcut() {
       e.preventDefault();
       focusEditor();
       emitInsertWrap('~~', '~~');
-      return;
-    }
-
-    // Cmd/Ctrl + -: Comment
-    if (mod(e) && !e.shiftKey && e.key === '-') {
-      e.preventDefault();
-      focusEditor();
-      emitInsertWrap('<!--', '-->');
       return;
     }
 
@@ -252,23 +259,6 @@ export function useShortcut() {
       return;
     }
 
-    // Cmd/Ctrl + 1-6: Heading levels (Typora style)
-    if (mod(e) && !e.shiftKey && ['1', '2', '3', '4', '5', '6'].includes(e.key)) {
-      e.preventDefault();
-      focusEditor();
-      const level = parseInt(e.key);
-      emitInsertText('\n' + '#'.repeat(level) + ' ');
-      return;
-    }
-
-    // Cmd/Ctrl + 0: Paragraph (Typora style)
-    if (mod(e) && !e.shiftKey && e.key === '0') {
-      e.preventDefault();
-      focusEditor();
-      emitInsertText('\n');
-      return;
-    }
-
     // Cmd/Ctrl + Shift + C: Code block (Typora style)
     if (mod(e) && e.shiftKey && e.key === 'C') {
       e.preventDefault();
@@ -290,14 +280,6 @@ export function useShortcut() {
       e.preventDefault();
       focusEditor();
       insertBlockquote();
-      return;
-    }
-
-    // Cmd/Ctrl + -: Horizontal rule (Typora style)
-    if (mod(e) && !e.shiftKey && e.key === '-') {
-      e.preventDefault();
-      focusEditor();
-      insertHr();
       return;
     }
 

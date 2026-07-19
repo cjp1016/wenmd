@@ -139,7 +139,7 @@
   --success-color: var(--state-success);
   --editor-bg: var(--background);
   --editor-text: var(--foreground);
-  --editor-max-width: 780px;
+  --editor-max-width: 860px;
   --code-bg: var(--background-100);
   --code-border: var(--background-300);
   --tab-active-bg: var(--background-50);

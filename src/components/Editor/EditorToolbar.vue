@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue';
 import { useEditorStore } from '../../stores/editorStore';
 import { useI18n } from '../../composables/useI18n';
-import { INSERT_TEXT_EVENT, INSERT_WRAP_EVENT } from '../../composables/useShortcut';
+import { INSERT_TEXT_EVENT, INSERT_WRAP_EVENT, SET_HEADING_EVENT } from '../../composables/useShortcut';
 
 const editorStore = useEditorStore();
 const { t } = useI18n();
@@ -22,7 +22,9 @@ function doBold() { emitInsertWrap('**', '**'); }
 function doItalic() { emitInsertWrap('*', '*'); }
 function doStrikethrough() { emitInsertWrap('~~', '~~'); }
 function doInlineCode() { emitInsertWrap('`', '`'); }
-function doHeading(level: number) { emitInsertText('\n' + '#'.repeat(level) + ' '); }
+function doHeading(level: number) {
+  window.dispatchEvent(new CustomEvent(SET_HEADING_EVENT, { detail: level }));
+}
 function doList() { emitInsertText('\n- '); }
 function doOrderedList() { emitInsertText('\n1. '); }
 function doQuote() { emitInsertText('\n> '); }
