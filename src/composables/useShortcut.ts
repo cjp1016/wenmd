@@ -69,10 +69,8 @@ export function useShortcut() {
   }
 
   function focusEditor() {
-    const pmEl = document.querySelector('.ProseMirror') as any;
-    if (pmEl && pmEl.pmViewDesc?.view) {
-      pmEl.pmViewDesc.view.focus();
-    } else if (pmEl) {
+    const pmEl = document.querySelector('.ProseMirror') as HTMLElement | null;
+    if (pmEl) {
       pmEl.focus();
     }
   }

@@ -3,7 +3,8 @@ import { ref, watch, onMounted, onUnmounted, nextTick, shallowRef } from 'vue';
 import { Milkdown, useEditor } from '@milkdown/vue';
 import { Crepe } from '@milkdown/crepe';
 import { replaceAll, insert } from '@milkdown/kit/utils';
-import { splitBlock } from '@milkdown/kit/prose/commands';
+import { splitBlock, setBlockType } from '@milkdown/kit/prose/commands';
+import { editorViewCtx } from '@milkdown/kit/core';
 import '@milkdown/crepe/theme/common/style.css';
 import '@milkdown/crepe/theme/classic.css';
 
@@ -17,6 +18,17 @@ const fileStore = useFileStore();
 const crepeInstance = shallowRef<Crepe | null>(null);
 const isInternalChange = ref(false);
 const isEditorEmpty = ref(true);
+
+// Reliable way to get ProseMirror EditorView from Milkdown context
+function getEditorView(): any | null {
+  const crepe = crepeInstance.value;
+  if (!crepe) return null;
+  try {
+    return crepe.editor.ctx.get(editorViewCtx);
+  } catch {
+    return null;
+  }
+}
 
 const { loading } = useEditor((root) => {
   const initialValue = fileStore.activeTab?.content || '';
@@ -93,9 +105,8 @@ function handleInsertText(e: Event) {
   try {
     // Smart newline handling: avoid extra empty paragraphs when inserting blocks
     if (text.startsWith('\n') && text !== '\n' && text !== '\n\n') {
-      const pmEl = document.querySelector('.ProseMirror') as any;
-      if (pmEl && pmEl.pmViewDesc?.view) {
-        const view = pmEl.pmViewDesc.view;
+      const view = getEditorView();
+      if (view) {
         const { $from } = view.state.selection;
         const currentNode = $from.parent;
         const isEmptyParagraph = currentNode.textContent === '' && currentNode.childCount === 0;
@@ -128,14 +139,8 @@ function handleInsertText(e: Event) {
 function handleInsertWrap(e: Event) {
   const ce = e as CustomEvent<{ prefix: string; suffix: string }>;
   const { prefix, suffix } = ce.detail;
-  const crepe = crepeInstance.value;
-  if (!crepe) return;
 
-  // Get the ProseMirror view from the DOM element
-  const pmEl = document.querySelector('.ProseMirror') as any;
-  if (!pmEl || !pmEl.pmViewDesc) return;
-
-  const view = pmEl.pmViewDesc.view;
+  const view = getEditorView();
   if (!view) return;
 
   const { from, to } = view.state.selection;
@@ -176,12 +181,9 @@ function findTextInDoc(doc: any, searchText: string, n: number): { from: number;
 function handleReplaceText(e: Event) {
   const ce = e as CustomEvent<{ find: string; replace: string }>;
   const { find, replace } = ce.detail;
-  const crepe = crepeInstance.value;
-  if (!crepe || !find) return;
+  if (!find) return;
 
-  const pmEl = document.querySelector('.ProseMirror') as any;
-  if (!pmEl || !pmEl.pmViewDesc) return;
-  const view = pmEl.pmViewDesc.view;
+  const view = getEditorView();
   if (!view) return;
 
   // Find first occurrence using proper doc traversal
@@ -195,12 +197,9 @@ function handleReplaceText(e: Event) {
 function handleReplaceAll(e: Event) {
   const ce = e as CustomEvent<{ find: string; replace: string }>;
   const { find, replace } = ce.detail;
-  const crepe = crepeInstance.value;
-  if (!crepe || !find) return;
+  if (!find) return;
 
-  const pmEl = document.querySelector('.ProseMirror') as any;
-  if (!pmEl || !pmEl.pmViewDesc) return;
-  const view = pmEl.pmViewDesc.view;
+  const view = getEditorView();
   if (!view) return;
 
   // Find all occurrences using proper doc traversal
@@ -229,9 +228,8 @@ function handleSelectMatch(e: Event) {
   const { text, index } = ce.detail;
   if (!text) return;
 
-  const pmEl = document.querySelector('.ProseMirror') as any;
-  if (!pmEl?.pmViewDesc?.view) return;
-  const view = pmEl.pmViewDesc.view;
+  const view = getEditorView();
+  if (!view) return;
 
   const pos = findTextInDoc(view.state.doc, text, index);
   if (!pos) return;
@@ -321,9 +319,8 @@ function handleRedo() {
 function handleAdjustHeading(e: Event) {
   const ce = e as CustomEvent<number>;
   const delta = ce.detail;
-  const pmEl = document.querySelector('.ProseMirror') as any;
-  if (!pmEl || !pmEl.pmViewDesc) return;
-  const view = pmEl.pmViewDesc.view;
+
+  const view = getEditorView();
   if (!view) return;
 
   const { state } = view;
@@ -343,20 +340,9 @@ function handleAdjustHeading(e: Event) {
   const newLevel = Math.max(0, Math.min(6, currentLevel + delta));
 
   if (newLevel === 0) {
-    const tr = state.tr.setBlockType(
-      $from.before(currentDepth),
-      $from.after(currentDepth),
-      paragraphType
-    );
-    view.dispatch(tr);
+    setBlockType(paragraphType)(state, view.dispatch);
   } else {
-    const tr = state.tr.setBlockType(
-      $from.before(currentDepth),
-      $from.after(currentDepth),
-      headingType,
-      { level: newLevel }
-    );
-    view.dispatch(tr);
+    setBlockType(headingType, { level: newLevel })(state, view.dispatch);
   }
 }
 
@@ -364,54 +350,26 @@ function handleAdjustHeading(e: Event) {
 function handleSetHeading(e: Event) {
   const ce = e as CustomEvent<number>;
   const level = ce.detail;
-  const crepe = crepeInstance.value;
-  if (!crepe) return;
 
-  const pmEl = document.querySelector('.ProseMirror') as any;
-  if (!pmEl || !pmEl.pmViewDesc) return;
-  const view = pmEl.pmViewDesc.view;
+  const view = getEditorView();
   if (!view) return;
 
   const { state } = view;
-  const { $from } = state.selection;
-
-  // Get the heading node type from the schema
   const headingType = state.schema.nodes.heading;
   const paragraphType = state.schema.nodes.paragraph;
   if (!headingType || !paragraphType) return;
 
-  // Check current block type
-  const currentDepth = $from.depth;
-  const currentNode = $from.node(currentDepth);
-
   if (level === 0) {
     // Convert to paragraph
-    if (currentNode.type === paragraphType) return; // Already paragraph
-    const tr = state.tr.setBlockType(
-      $from.before(currentDepth),
-      $from.after(currentDepth),
-      paragraphType
-    );
-    view.dispatch(tr);
+    setBlockType(paragraphType)(state, view.dispatch);
   } else {
-    // Convert to heading of specified level
-    const attrs = { level };
-    // If already same heading level, toggle back to paragraph (Typora behavior)
+    // Check if current block is already this heading level (toggle back to paragraph)
+    const { $from } = state.selection;
+    const currentNode = $from.node($from.depth);
     if (currentNode.type === headingType && currentNode.attrs.level === level) {
-      const tr = state.tr.setBlockType(
-        $from.before(currentDepth),
-        $from.after(currentDepth),
-        paragraphType
-      );
-      view.dispatch(tr);
+      setBlockType(paragraphType)(state, view.dispatch);
     } else {
-      const tr = state.tr.setBlockType(
-        $from.before(currentDepth),
-        $from.after(currentDepth),
-        headingType,
-        attrs
-      );
-      view.dispatch(tr);
+      setBlockType(headingType, { level })(state, view.dispatch);
     }
   }
 }
