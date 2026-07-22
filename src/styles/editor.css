@@ -31,9 +31,9 @@
 
 /* Crepe editor wrapper - Typora-inspired comfortable reading area */
 .crepe-wrapper {
-  max-width: 860px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 40px 72px 120px;
+  padding: 16px 36px 80px;
   color: var(--editor-text);
   font-size: var(--font-size, 15px);
   font-family: var(--font-family, var(--font-sans));
@@ -55,6 +55,7 @@
   color: var(--editor-text);
   background: var(--editor-bg);
   caret-color: var(--primary);
+  padding: 0 !important;
 }
 
 .ProseMirror p {
@@ -333,9 +334,9 @@
 
 /* Focus mode - keep a comfortable reading width and center it */
 .focus-mode .crepe-wrapper {
-  max-width: 720px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 60px 48px 120px;
+  padding: 16px 36px 80px;
 }
 
 /* Typewriter mode */
@@ -474,13 +475,13 @@
 /* ===== Responsive padding for smaller windows ===== */
 @media (max-width: 900px) {
   .crepe-wrapper {
-    padding: 32px 40px 100px;
+    padding: 14px 28px 60px;
   }
 }
 
 @media (max-width: 680px) {
   .crepe-wrapper {
-    padding: 24px 24px 80px;
+    padding: 10px 14px 40px;
   }
 }
 
