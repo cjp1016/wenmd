@@ -38,6 +38,8 @@ const isResizing = ref(false);
 
 // Pending close action: 'window' or tabId
 let pendingCloseAction: 'window' | null = null;
+// Flag to skip close confirmation when user explicitly chose to close without saving
+let skipCloseConfirmation = false;
 
 const SIDEBAR_MIN = 180;
 const SIDEBAR_MAX = 500;
@@ -182,6 +184,7 @@ async function setupWindowCloseHandler() {
   try {
     const win = getCurrentWindow();
     await win.onCloseRequested(async (event) => {
+      if (skipCloseConfirmation) return;
       if (fileStore.hasUnsavedChanges()) {
         event.preventDefault();
         pendingCloseAction = 'window';
@@ -203,10 +206,18 @@ async function handleSaveAndClose() {
   }
   if (pendingCloseAction === 'window') {
     pendingCloseAction = null;
+    if (fileStore.hasUnsavedChanges()) {
+      // Some tabs were not saved (user cancelled save dialog), show dialog again
+      showUnsavedChangesDialog.value = true;
+      return;
+    }
+    skipCloseConfirmation = true;
     try {
       await getCurrentWindow().close();
     } catch {
       // Ignore
+    } finally {
+      skipCloseConfirmation = false;
     }
   }
 }
@@ -215,9 +226,14 @@ function handleCloseWithoutSaving() {
   showUnsavedChangesDialog.value = false;
   if (pendingCloseAction === 'window') {
     pendingCloseAction = null;
-    getCurrentWindow().close().catch(() => {
-      // Ignore
-    });
+    skipCloseConfirmation = true;
+    try {
+      getCurrentWindow().close().catch(() => {
+        // Ignore
+      });
+    } finally {
+      skipCloseConfirmation = false;
+    }
   }
 }
 

@@ -3,6 +3,7 @@ import { ref, watch, onMounted, onUnmounted, nextTick, shallowRef } from 'vue';
 import { Milkdown, useEditor } from '@milkdown/vue';
 import { Crepe } from '@milkdown/crepe';
 import { replaceAll, insert } from '@milkdown/kit/utils';
+import { splitBlock } from '@milkdown/kit/prose/commands';
 import '@milkdown/crepe/theme/common/style.css';
 import '@milkdown/crepe/theme/classic.css';
 
@@ -71,7 +72,8 @@ watch(
     if (currentContent !== newContent) {
       isInternalChange.value = true;
       try {
-        crepe.editor.action(replaceAll(newContent, false));
+        // Use flush=true to fully recreate editor state and avoid stale empty paragraphs
+        crepe.editor.action(replaceAll(newContent, true));
       } catch (e) {
         console.error('Failed to replace content:', e);
       }
@@ -84,11 +86,39 @@ watch(
 // Event handlers for keyboard shortcuts
 function handleInsertText(e: Event) {
   const ce = e as CustomEvent<string>;
-  const text = ce.detail;
+  let text = ce.detail;
   const crepe = crepeInstance.value;
   if (!crepe || !text) return;
 
   try {
+    // Smart newline handling: avoid extra empty paragraphs when inserting blocks
+    if (text.startsWith('\n') && text !== '\n' && text !== '\n\n') {
+      const pmEl = document.querySelector('.ProseMirror') as any;
+      if (pmEl && pmEl.pmViewDesc?.view) {
+        const view = pmEl.pmViewDesc.view;
+        const { $from } = view.state.selection;
+        const currentNode = $from.parent;
+        const isEmptyParagraph = currentNode.textContent === '' && currentNode.childCount === 0;
+
+        if (isEmptyParagraph) {
+          // Current paragraph is empty: insert content directly without leading newlines
+          text = text.replace(/^\n+/, '');
+          if (text) {
+            crepe.editor.action(insert(text));
+          }
+          return;
+        }
+
+        // Current paragraph has content: split block first, then insert
+        splitBlock(view.state, view.dispatch);
+        text = text.replace(/^\n+/, '');
+        if (text) {
+          crepe.editor.action(insert(text));
+        }
+        return;
+      }
+    }
+
     crepe.editor.action(insert(text));
   } catch (err) {
     console.error('Failed to insert text:', err);

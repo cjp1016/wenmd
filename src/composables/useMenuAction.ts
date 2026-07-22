@@ -167,10 +167,10 @@ export function useMenuAction() {
 
       // Paragraph - Insert
       case 'insert_paragraph_above':
-        dispatchInsertText('\n\n');
+        dispatchInsertText('\n');
         break;
       case 'insert_paragraph_below':
-        dispatchInsertText('\n\n');
+        dispatchInsertText('\n');
         break;
 
       // Paragraph - Links
