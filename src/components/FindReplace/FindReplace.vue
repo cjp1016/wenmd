@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, nextTick } from 'vue';
 import { useEditorStore } from '../../stores/editorStore';
 import { useFileStore } from '../../stores/fileStore';
 import { useI18n } from '../../composables/useI18n';
-import { REPLACE_TEXT_EVENT, REPLACE_ALL_EVENT } from '../../composables/useShortcut';
+import { REPLACE_TEXT_EVENT, REPLACE_ALL_EVENT, SELECT_MATCH_EVENT } from '../../composables/useShortcut';
 
 const editorStore = useEditorStore();
 const fileStore = useFileStore();
@@ -14,33 +14,47 @@ const replaceText = ref('');
 const matchCount = ref(0);
 const currentMatch = ref(0);
 const showReplace = ref(false);
+const findInputRef = ref<HTMLInputElement | null>(null);
 
 function close() {
   editorStore.showFindReplace = false;
   findText.value = '';
   replaceText.value = '';
   matchCount.value = 0;
+  currentMatch.value = 0;
+}
+
+function dispatchSelectMatch(index: number) {
+  if (!findText.value) return;
+  window.dispatchEvent(new CustomEvent(SELECT_MATCH_EVENT, {
+    detail: { text: findText.value, index }
+  }));
 }
 
 function findNext() {
-  if (matchCount.value > 0) {
-    currentMatch.value = (currentMatch.value + 1) % matchCount.value;
-  }
+  if (matchCount.value === 0) return;
+  currentMatch.value = (currentMatch.value + 1) % matchCount.value;
+  dispatchSelectMatch(currentMatch.value);
 }
 
 function findPrev() {
-  if (matchCount.value > 0) {
-    currentMatch.value = currentMatch.value === 0 ? matchCount.value - 1 : currentMatch.value - 1;
-  }
+  if (matchCount.value === 0) return;
+  currentMatch.value = currentMatch.value === 0 ? matchCount.value - 1 : currentMatch.value - 1;
+  dispatchSelectMatch(currentMatch.value);
 }
 
 function updateMatches() {
   const text = findText.value;
-  if (!text) { matchCount.value = 0; return; }
+  if (!text) { matchCount.value = 0; currentMatch.value = 0; return; }
   const content = fileStore.activeTab?.content || '';
   const regex = new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
   const matches = content.match(regex);
-  matchCount.value = matches ? matches.length : 0;
+  const newCount = matches ? matches.length : 0;
+  matchCount.value = newCount;
+  if (newCount > 0) {
+    currentMatch.value = 0;
+    dispatchSelectMatch(0);
+  }
 }
 
 function doReplace() {
@@ -48,7 +62,6 @@ function doReplace() {
   window.dispatchEvent(new CustomEvent(REPLACE_TEXT_EVENT, {
     detail: { find: findText.value, replace: replaceText.value }
   }));
-  // Update match count after a tick
   setTimeout(updateMatches, 50);
 }
 
@@ -57,17 +70,26 @@ function doReplaceAll() {
   window.dispatchEvent(new CustomEvent(REPLACE_ALL_EVENT, {
     detail: { find: findText.value, replace: replaceText.value }
   }));
-  // Update match count after a tick
   setTimeout(updateMatches, 50);
 }
 
 watch(findText, () => updateMatches());
+
+// Auto-focus the find input when the panel opens
+watch(() => editorStore.showFindReplace, async (show) => {
+  if (show) {
+    await nextTick();
+    findInputRef.value?.focus();
+    findInputRef.value?.select();
+  }
+});
 </script>
 
 <template>
   <div class="find-replace" v-if="editorStore.showFindReplace">
     <div class="fr-row">
       <input
+        ref="findInputRef"
         v-model="findText"
         class="input fr-input"
         :placeholder="t('find_dots')"

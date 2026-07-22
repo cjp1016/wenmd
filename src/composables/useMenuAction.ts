@@ -3,12 +3,21 @@ import { listen } from '@tauri-apps/api/event';
 import { useFileStore } from '../stores/fileStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useEditorStore } from '../stores/editorStore';
-import { INSERT_TEXT_EVENT, INSERT_WRAP_EVENT } from './useShortcut';
+import { INSERT_TEXT_EVENT, INSERT_WRAP_EVENT, SET_HEADING_EVENT, ADJUST_HEADING_EVENT, UNDO_EVENT, REDO_EVENT } from './useShortcut';
 
 export function useMenuAction() {
   const fileStore = useFileStore();
   const settingsStore = useSettingsStore();
   const editorStore = useEditorStore();
+
+  function focusEditorForClipboard() {
+    const pmEl = document.querySelector('.ProseMirror') as any;
+    if (pmEl && pmEl.pmViewDesc?.view) {
+      pmEl.pmViewDesc.view.focus();
+    } else if (pmEl) {
+      (pmEl as HTMLElement).focus();
+    }
+  }
 
   function dispatchInsertText(text: string) {
     window.dispatchEvent(new CustomEvent(INSERT_TEXT_EVENT, { detail: text }));
@@ -39,6 +48,9 @@ export function useMenuAction() {
       case 'close_tab':
         if (fileStore.activeTabId) fileStore.closeTab(fileStore.activeTabId);
         break;
+      case 'clear_recent':
+        fileStore.clearRecentFiles();
+        break;
 
       // View
       case 'toggle_sidebar':
@@ -65,15 +77,17 @@ export function useMenuAction() {
 
       // Edit
       case 'undo':
-        document.execCommand('undo');
+        window.dispatchEvent(new CustomEvent(UNDO_EVENT));
         break;
       case 'redo':
-        document.execCommand('redo');
+        window.dispatchEvent(new CustomEvent(REDO_EVENT));
         break;
       case 'cut':
+        focusEditorForClipboard();
         document.execCommand('cut');
         break;
       case 'copy':
+        focusEditorForClipboard();
         document.execCommand('copy');
         break;
       case 'paste':
@@ -81,10 +95,12 @@ export function useMenuAction() {
           const text = await navigator.clipboard.readText();
           dispatchInsertText(text);
         } catch {
+          focusEditorForClipboard();
           document.execCommand('paste');
         }
         break;
       case 'select_all':
+        focusEditorForClipboard();
         document.execCommand('selectAll');
         break;
       case 'find':
@@ -129,16 +145,16 @@ export function useMenuAction() {
         document.execCommand('removeFormat');
         break;
 
-      // Paragraph - Headings
-      case 'heading_1': dispatchInsertText('\n# '); break;
-      case 'heading_2': dispatchInsertText('\n## '); break;
-      case 'heading_3': dispatchInsertText('\n### '); break;
-      case 'heading_4': dispatchInsertText('\n#### '); break;
-      case 'heading_5': dispatchInsertText('\n##### '); break;
-      case 'heading_6': dispatchInsertText('\n###### '); break;
-      case 'paragraph_text': dispatchInsertText('\n'); break;
-      case 'increase_heading': dispatchInsertText('#'); break;
-      case 'decrease_heading': dispatchInsertText('\n'); break;
+      // Paragraph - Headings (use SET_HEADING_EVENT to properly convert block type)
+      case 'heading_1': window.dispatchEvent(new CustomEvent(SET_HEADING_EVENT, { detail: 1 })); break;
+      case 'heading_2': window.dispatchEvent(new CustomEvent(SET_HEADING_EVENT, { detail: 2 })); break;
+      case 'heading_3': window.dispatchEvent(new CustomEvent(SET_HEADING_EVENT, { detail: 3 })); break;
+      case 'heading_4': window.dispatchEvent(new CustomEvent(SET_HEADING_EVENT, { detail: 4 })); break;
+      case 'heading_5': window.dispatchEvent(new CustomEvent(SET_HEADING_EVENT, { detail: 5 })); break;
+      case 'heading_6': window.dispatchEvent(new CustomEvent(SET_HEADING_EVENT, { detail: 6 })); break;
+      case 'paragraph_text': window.dispatchEvent(new CustomEvent(SET_HEADING_EVENT, { detail: 0 })); break;
+      case 'increase_heading': window.dispatchEvent(new CustomEvent(ADJUST_HEADING_EVENT, { detail: 1 })); break;
+      case 'decrease_heading': window.dispatchEvent(new CustomEvent(ADJUST_HEADING_EVENT, { detail: -1 })); break;
 
       // Paragraph - Blocks
       case 'insert_table':
@@ -151,7 +167,7 @@ export function useMenuAction() {
         dispatchInsertText('\n```\n\n```\n');
         break;
 
-      // Paragraph - Inline
+      // Paragraph - Lists
       case 'blockquote':
         dispatchInsertText('\n> ');
         break;
@@ -165,30 +181,19 @@ export function useMenuAction() {
         dispatchInsertText('\n- [ ] ');
         break;
 
-      // Paragraph - Insert
-      case 'insert_paragraph_above':
-        dispatchInsertText('\n');
+      // Paragraph - Other
+      case 'horizontal_rule':
+        dispatchInsertText('\n---\n');
         break;
-      case 'insert_paragraph_below':
-        dispatchInsertText('\n');
-        break;
-
-      // Paragraph - Links
       case 'link_reference':
-        dispatchInsertText('\n[](url)');
+        dispatchInsertWrap('[', '](url)');
         break;
       case 'footnote':
         dispatchInsertText('\n[^1]: ');
         break;
 
-      // Paragraph - Other
-      case 'horizontal_rule':
-        dispatchInsertText('\n---\n');
-        break;
-
       // Settings
       case 'settings':
-        // Emit custom event for toolbar to open settings dialog
         window.dispatchEvent(new CustomEvent('mdview:open-settings'));
         break;
 
@@ -201,7 +206,6 @@ export function useMenuAction() {
 
   let unlisten: (() => void) | null = null;
   let unlistenRecent: (() => void) | null = null;
-  let unlistenClear: (() => void) | null = null;
 
   onMounted(async () => {
     try {
@@ -212,12 +216,6 @@ export function useMenuAction() {
       unlistenRecent = await listen<string>('open-recent-file', (event) => {
         fileStore.openFile(event.payload);
       });
-
-      unlistenClear = await listen<string>('menu-action', (event) => {
-        if (event.payload === 'clear_recent') {
-          fileStore.clearRecentFiles();
-        }
-      });
     } catch {
       // Not in Tauri environment (dev mode in browser)
     }
@@ -226,6 +224,5 @@ export function useMenuAction() {
   onUnmounted(() => {
     if (unlisten) unlisten();
     if (unlistenRecent) unlistenRecent();
-    if (unlistenClear) unlistenClear();
   });
 }

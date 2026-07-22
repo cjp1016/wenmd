@@ -19,6 +19,18 @@ async function changeLocale(loc: 'zh' | 'en') {
     // Not in Tauri environment (browser dev)
   }
 }
+
+const FONT_OPTIONS = [
+  { value: 'system-ui', label: 'System Default' },
+  { value: 'Inter', label: 'Inter' },
+  { value: 'Georgia', label: 'Georgia (Serif)' },
+  { value: "'Courier New', monospace", label: 'Courier New (Mono)' },
+  { value: 'Arial', label: 'Arial' },
+  { value: "'PingFang SC', sans-serif", label: 'PingFang SC (苹方)' },
+  { value: "'Microsoft YaHei', sans-serif", label: 'Microsoft YaHei (微软雅黑)' },
+  { value: "'Noto Serif SC', serif", label: 'Noto Serif SC (思源宋)' },
+  { value: "'Source Han Sans SC', sans-serif", label: 'Source Han Sans (思源黑体)' },
+];
 </script>
 
 <template>
@@ -84,15 +96,7 @@ async function changeLocale(loc: 'zh' | 'en') {
               @change="settings.setFontFamily(($event.target as HTMLSelectElement).value)"
               class="font-family-select"
             >
-              <option value="system-ui">System Default</option>
-              <option value="Inter">Inter</option>
-              <option value="Georgia">Georgia</option>
-              <option value="Courier New">Courier New</option>
-              <option value="Arial">Arial</option>
-              <option value="Microsoft YaHei">Microsoft YaHei</option>
-              <option value="SimSun">SimSun</option>
-              <option value="SimHei">SimHei</option>
-              <option value="PingFang SC">PingFang SC</option>
+              <option v-for="opt in FONT_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
             </select>
           </div>
         </div>

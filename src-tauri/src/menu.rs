@@ -62,8 +62,6 @@ struct Labels {
     strikethrough: &'static str,
     comment: &'static str,
     hyperlink: &'static str,
-    link_operations: &'static str,
-    image: &'static str,
     insert_image: &'static str,
     insert_local_image: &'static str,
     clear_format: &'static str,
@@ -79,19 +77,16 @@ struct Labels {
     insert_table: &'static str,
     formula_block: &'static str,
     code_block: &'static str,
-    code_tools: &'static str,
     blockquote: &'static str,
     ordered_list: &'static str,
     unordered_list: &'static str,
     task_list: &'static str,
-    list_indent: &'static str,
-    insert_paragraph_above: &'static str,
-    insert_paragraph_below: &'static str,
     link_reference: &'static str,
     footnote: &'static str,
     horizontal_rule: &'static str,
     table_of_contents: &'static str,
     yaml_front_matter: &'static str,
+    format: &'static str,
     window: &'static str,
 }
 
@@ -140,8 +135,6 @@ fn labels(locale: MenuLocale) -> Labels {
             strikethrough: "删除线",
             comment: "注释",
             hyperlink: "超链接",
-            link_operations: "链接操作",
-            image: "图像",
             insert_image: "插入图片",
             insert_local_image: "插入本地图片...",
             clear_format: "清除样式",
@@ -157,19 +150,16 @@ fn labels(locale: MenuLocale) -> Labels {
             insert_table: "表格",
             formula_block: "公式块",
             code_block: "代码块",
-            code_tools: "代码工具",
             blockquote: "引用",
             ordered_list: "有序列表",
             unordered_list: "无序列表",
             task_list: "任务列表",
-            list_indent: "列表缩进",
-            insert_paragraph_above: "在上方插入段落",
-            insert_paragraph_below: "在下方插入段落",
             link_reference: "链接引用",
             footnote: "脚注",
             horizontal_rule: "水平分隔线",
             table_of_contents: "内容目录",
             yaml_front_matter: "YAML Front Matter",
+            format: "格式",
             window: "窗口",
         },
         MenuLocale::En => Labels {
@@ -215,8 +205,6 @@ fn labels(locale: MenuLocale) -> Labels {
             strikethrough: "Strikethrough",
             comment: "Comment",
             hyperlink: "Hyperlink",
-            link_operations: "Link Operations",
-            image: "Image",
             insert_image: "Insert Image",
             insert_local_image: "Insert Local Image...",
             clear_format: "Clear Formatting",
@@ -232,19 +220,16 @@ fn labels(locale: MenuLocale) -> Labels {
             insert_table: "Table",
             formula_block: "Math Block",
             code_block: "Code Block",
-            code_tools: "Code Tools",
             blockquote: "Blockquote",
             ordered_list: "Ordered List",
             unordered_list: "Unordered List",
             task_list: "Task List",
-            list_indent: "List Indentation",
-            insert_paragraph_above: "Insert Paragraph Above",
-            insert_paragraph_below: "Insert Paragraph Below",
             link_reference: "Link Reference",
             footnote: "Footnote",
             horizontal_rule: "Horizontal Rule",
             table_of_contents: "Table of Contents",
             yaml_front_matter: "YAML Front Matter",
+            format: "Format",
             window: "Window",
         },
     }
@@ -337,7 +322,7 @@ pub fn build_menu(app: &AppHandle, locale: MenuLocale) -> Result<(), Box<dyn std
         .separator()
         .text("zoom_in", format!("{}\t{}", t.zoom_in, fmt("⌘=")))
         .text("zoom_out", format!("{}\t{}", t.zoom_out, fmt("⌘-")))
-        .text("zoom_reset", format!("{}\t{}", t.actual_size, fmt("⌘0")))
+        .text("zoom_reset", t.actual_size)
         .separator()
         .text("toggle_theme", t.toggle_theme)
         .build()?;
@@ -353,48 +338,41 @@ pub fn build_menu(app: &AppHandle, locale: MenuLocale) -> Result<(), Box<dyn std
         .separator()
         .text("paragraph_text", format!("{}\t{}", t.paragraph_text, fmt("⌘0")))
         .separator()
-        .text("increase_heading", format!("{}\t{}", t.increase_heading, fmt("⌘+")))
-        .text("decrease_heading", format!("{}\t{}", t.decrease_heading, fmt("⌘-")))
+        .text("increase_heading", t.increase_heading)
+        .text("decrease_heading", t.decrease_heading)
         .separator()
-        .text("insert_table", t.insert_table)
+        .text("insert_table", format!("{}\t{}", t.insert_table, fmt("⌘T")))
         .text("formula_block", format!("{}\t{}", t.formula_block, fmt("⌥⌘B")))
         .text("code_block", format!("{}\t{}", t.code_block, fmt("⇧⌘C")))
-        .text("code_tools", t.code_tools)
         .separator()
         .text("blockquote", format!("{}\t{}", t.blockquote, fmt("⇧⌘Q")))
         .separator()
         .text("ordered_list", format!("{}\t{}", t.ordered_list, fmt("⇧⌘O")))
         .text("unordered_list", format!("{}\t{}", t.unordered_list, fmt("⇧⌘U")))
         .text("task_list", format!("{}\t{}", t.task_list, fmt("⇧⌘X")))
-        .text("list_indent", t.list_indent)
-        .separator()
-        .text("insert_paragraph_above", t.insert_paragraph_above)
-        .text("insert_paragraph_below", t.insert_paragraph_below)
         .separator()
         .text("link_reference", format!("{}\t{}", t.link_reference, fmt("⇧⌘L")))
         .text("footnote", format!("{}\t{}", t.footnote, fmt("⇧⌘R")))
         .separator()
-        .text("horizontal_rule", format!("{}\t{}", t.horizontal_rule, fmt("⌘-")))
+        .text("horizontal_rule", t.horizontal_rule)
         .text("table_of_contents", t.table_of_contents)
         .text("yaml_front_matter", t.yaml_front_matter)
         .build()?;
 
     // --- Format menu (Typora style) ---
-    let format_submenu = SubmenuBuilder::new(app, "格式")
+    let format_submenu = SubmenuBuilder::new(app, t.format)
         .text("bold", format!("{}\t{}", t.bold, fmt("⌘B")))
         .text("italic", format!("{}\t{}", t.italic, fmt("⌘I")))
         .text("underline", format!("{}\t{}", t.underline, fmt("⌘U")))
-        .text("inline_code", format!("{}\t{}", t.inline_code, fmt("⌘`")))
+        .text("inline_code", format!("{}\t{}", t.inline_code, fmt("⌘E")))
         .separator()
         .text("inline_formula", format!("{}\t{}", t.inline_formula, fmt("⌘M")))
-        .text("strikethrough", format!("{}\t{}", t.strikethrough, fmt("⌘⇧`")))
-        .text("comment", format!("{}\t{}", t.comment, fmt("⌘-")))
+        .text("strikethrough", t.strikethrough)
+        .text("comment", t.comment)
         .separator()
         .text("hyperlink", format!("{}\t{}", t.hyperlink, fmt("⌘K")))
-        .text("link_operations", t.link_operations)
         .separator()
-        .text("image", t.image)
-        .text("insert_image", format!("{}\t{}", t.insert_image, fmt("⌘⇧I")))
+        .text("insert_image", format!("{}\t{}", t.insert_image, fmt("⇧⌘I")))
         .text("insert_local_image", t.insert_local_image)
         .separator()
         .text("clear_format", format!("{}\t{}", t.clear_format, fmt("⌘\\")))
@@ -437,6 +415,17 @@ pub fn handle_menu_event(app: &AppHandle, event: tauri::menu::MenuEvent) {
     match action {
         "quit" => {
             app.exit(0);
+        }
+        "hide" => {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.hide();
+            }
+        }
+        "show_all" => {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
         }
         "clear_recent" => {
             if let Some(state) = app.try_state::<super::AppState>() {

@@ -9,6 +9,10 @@ export const INSERT_WRAP_EVENT = 'mdview:insert-wrap';
 export const REPLACE_TEXT_EVENT = 'mdview:replace-text';
 export const REPLACE_ALL_EVENT = 'mdview:replace-all';
 export const SET_HEADING_EVENT = 'mdview:set-heading';
+export const ADJUST_HEADING_EVENT = 'mdview:adjust-heading';
+export const UNDO_EVENT = 'mdview:undo';
+export const REDO_EVENT = 'mdview:redo';
+export const SELECT_MATCH_EVENT = 'mdview:select-match';
 
 export function useShortcut() {
   const fileStore = useFileStore();
@@ -73,10 +77,17 @@ export function useShortcut() {
     }
   }
 
-  function isInputElement(target: EventTarget | null): target is HTMLElement {
+  // Returns true if target is a non-editor input (INPUT/TEXTAREA or other contenteditable)
+  // Returns false for ProseMirror editor so formatting shortcuts work there too
+  function isNonEditorInput(target: EventTarget | null): boolean {
     if (!(target instanceof HTMLElement)) return false;
     const tag = target.tagName;
-    return tag === 'INPUT' || tag === 'TEXTAREA' || target.isContentEditable;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return true;
+    // Allow formatting shortcuts in ProseMirror editor
+    if (target.classList.contains('ProseMirror')) return false;
+    // Block other contenteditable elements
+    if (target.isContentEditable) return true;
+    return false;
   }
 
   function handleKeyDown(e: KeyboardEvent) {
@@ -184,8 +195,8 @@ export function useShortcut() {
       return;
     }
 
-    // === Editor formatting shortcuts (standard shortcuts, work globally) ===
-    if (isInputElement(e.target)) return;
+    // === Editor formatting shortcuts (work globally, including when ProseMirror is focused) ===
+    if (isNonEditorInput(e.target)) return;
 
     // Cmd/Ctrl + B: Bold
     if (mod(e) && e.key === 'b' && !e.shiftKey) {

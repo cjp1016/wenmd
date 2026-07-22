@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue';
 import { useEditorStore } from '../../stores/editorStore';
 import { useI18n } from '../../composables/useI18n';
-import { INSERT_TEXT_EVENT, INSERT_WRAP_EVENT, SET_HEADING_EVENT } from '../../composables/useShortcut';
+import { INSERT_TEXT_EVENT, INSERT_WRAP_EVENT, SET_HEADING_EVENT, UNDO_EVENT, REDO_EVENT } from '../../composables/useShortcut';
 
 const editorStore = useEditorStore();
 const { t } = useI18n();
@@ -31,8 +31,8 @@ function doQuote() { emitInsertText('\n> '); }
 function doCodeBlock() { emitInsertText('\n```\n\n```\n'); }
 function doTable() { emitInsertText('\n| Column 1 | Column 2 | Column 3 |\n|----------|----------|----------|\n| Cell | Cell | Cell |\n| Cell | Cell | Cell |\n'); }
 function doHr() { emitInsertText('\n---\n'); }
-function doUndo() { document.execCommand('undo'); }
-function doRedo() { document.execCommand('redo'); }
+function doUndo() { window.dispatchEvent(new CustomEvent(UNDO_EVENT)); }
+function doRedo() { window.dispatchEvent(new CustomEvent(REDO_EVENT)); }
 
 onMounted(() => {
   isMacOS.value = navigator.platform.toUpperCase().includes('MAC');
@@ -100,7 +100,7 @@ onMounted(() => {
     <div class="toolbar-sep"></div>
 
     <!-- Links / Images -->
-    <button class="tool-btn" @click="emitInsertText('[](url)')" :title="t('link')">
+    <button class="tool-btn" @click="emitInsertText('[](url)')" :title="t('hyperlink')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
         <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>

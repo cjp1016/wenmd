@@ -9,7 +9,7 @@ import '@milkdown/crepe/theme/classic.css';
 
 import { useEditorStore } from '../../stores/editorStore';
 import { useFileStore } from '../../stores/fileStore';
-import { INSERT_TEXT_EVENT, INSERT_WRAP_EVENT, REPLACE_TEXT_EVENT, REPLACE_ALL_EVENT, SET_HEADING_EVENT } from '../../composables/useShortcut';
+import { INSERT_TEXT_EVENT, INSERT_WRAP_EVENT, REPLACE_TEXT_EVENT, REPLACE_ALL_EVENT, SET_HEADING_EVENT, ADJUST_HEADING_EVENT, UNDO_EVENT, REDO_EVENT, SELECT_MATCH_EVENT } from '../../composables/useShortcut';
 
 const editorStore = useEditorStore();
 const fileStore = useFileStore();
@@ -145,6 +145,34 @@ function handleInsertWrap(e: Event) {
   view.dispatch(tr);
 }
 
+// Helper: find the Nth occurrence of searchText in the ProseMirror doc
+// Returns correct ProseMirror positions (not textContent indices)
+function findTextInDoc(doc: any, searchText: string, n: number): { from: number; to: number } | null {
+  if (!searchText) return null;
+  const searchLower = searchText.toLowerCase();
+  let count = 0;
+  let result: { from: number; to: number } | null = null;
+
+  doc.descendants((node: any, pos: number) => {
+    if (result) return false;
+    if (!node.isText || !node.text) return;
+    const nodeLower = (node.text as string).toLowerCase();
+    let searchFrom = 0;
+    while (true) {
+      const idx = nodeLower.indexOf(searchLower, searchFrom);
+      if (idx === -1) break;
+      if (count === n) {
+        result = { from: pos + idx, to: pos + idx + searchText.length };
+        return false;
+      }
+      count++;
+      searchFrom = idx + 1;
+    }
+  });
+
+  return result;
+}
+
 function handleReplaceText(e: Event) {
   const ce = e as CustomEvent<{ find: string; replace: string }>;
   const { find, replace } = ce.detail;
@@ -156,12 +184,11 @@ function handleReplaceText(e: Event) {
   const view = pmEl.pmViewDesc.view;
   if (!view) return;
 
-  // Find first occurrence and replace
-  const docText = view.state.doc.textContent;
-  const idx = docText.indexOf(find);
-  if (idx === -1) return;
+  // Find first occurrence using proper doc traversal
+  const pos = findTextInDoc(view.state.doc, find, 0);
+  if (!pos) return;
 
-  const tr = view.state.tr.insertText(replace, idx, idx + find.length);
+  const tr = view.state.tr.insertText(replace, pos.from, pos.to);
   view.dispatch(tr);
 }
 
@@ -176,27 +203,159 @@ function handleReplaceAll(e: Event) {
   const view = pmEl.pmViewDesc.view;
   if (!view) return;
 
-  // Replace all occurrences from end to start to preserve positions
-  const docText = view.state.doc.textContent;
+  // Find all occurrences using proper doc traversal
+  const positions: Array<{ from: number; to: number }> = [];
+  let index = 0;
+  while (true) {
+    const pos = findTextInDoc(view.state.doc, find, index);
+    if (!pos) break;
+    positions.push(pos);
+    index++;
+  }
+
+  if (positions.length === 0) return;
+
+  // Replace from end to start to preserve earlier positions
   let tr = view.state.tr;
-
-  // Collect all match positions first
-  const positions: number[] = [];
-  let searchIdx = 0;
-  while (searchIdx < docText.length) {
-    const found = docText.indexOf(find, searchIdx);
-    if (found === -1) break;
-    positions.push(found);
-    searchIdx = found + find.length;
-  }
-
-  // Replace from end to start
   for (let i = positions.length - 1; i >= 0; i--) {
-    const pos = positions[i];
-    tr = tr.insertText(replace, pos, pos + find.length);
+    tr = tr.insertText(replace, positions[i].from, positions[i].to);
+  }
+  view.dispatch(tr);
+}
+
+// Navigate to the Nth match and select it in ProseMirror
+function handleSelectMatch(e: Event) {
+  const ce = e as CustomEvent<{ text: string; index: number }>;
+  const { text, index } = ce.detail;
+  if (!text) return;
+
+  const pmEl = document.querySelector('.ProseMirror') as any;
+  if (!pmEl?.pmViewDesc?.view) return;
+  const view = pmEl.pmViewDesc.view;
+
+  const pos = findTextInDoc(view.state.doc, text, index);
+  if (!pos) return;
+
+  const { state } = view;
+  // Create a selection from pos.from to pos.to by dispatching tr with cursor + scrollIntoView
+  try {
+    // Build a transaction that sets the selection to cover the matched text
+    const tr = state.tr;
+    // Use ProseMirror's selection mechanism via anchor/head approach
+    const $from = state.doc.resolve(pos.from);
+    const $to = state.doc.resolve(pos.to);
+    // @ts-ignore
+    const TextSel = state.selection.constructor;
+    // @ts-ignore
+    const newSel = TextSel.between ? TextSel.between($from, $to) : null;
+    if (newSel) {
+      tr.setSelection(newSel);
+    } else {
+      tr.setMeta('selectMatch', { from: pos.from, to: pos.to });
+    }
+    view.dispatch(tr.scrollIntoView());
+    view.focus();
+  } catch {
+    // Fallback: just move cursor to position
+    try {
+      const tr = state.tr.setMeta('selectMatch', pos).scrollIntoView();
+      view.dispatch(tr);
+    } catch { /* ignore */ }
+  }
+}
+
+// Watch source mode toggle: when switching back to WYSIWYG, reload content into editor
+watch(
+  () => editorStore.showSourceMode,
+  async (isSource) => {
+    if (!isSource) {
+      // Switching back from source mode → reload content into Crepe
+      await nextTick();
+      const crepe = crepeInstance.value;
+      if (!crepe) return;
+      const newContent = fileStore.activeTab?.content || '';
+      isInternalChange.value = true;
+      try {
+        crepe.editor.action(replaceAll(newContent, true));
+      } catch (e) {
+        console.error('Failed to reload content from source mode:', e);
+      }
+      isInternalChange.value = false;
+    }
+  }
+);
+
+// Source mode input handler
+function handleSourceInput(e: Event) {
+  const content = (e.target as HTMLTextAreaElement).value;
+  fileStore.updateContent(content);
+  editorStore.updateStats(content);
+}
+
+// Undo via simulated keyboard event on ProseMirror
+function handleUndo() {
+  const pm = document.querySelector('.ProseMirror') as HTMLElement | null;
+  if (!pm) return;
+  const isMac = navigator.platform.toUpperCase().includes('MAC');
+  pm.dispatchEvent(new KeyboardEvent('keydown', {
+    key: 'z', code: 'KeyZ',
+    metaKey: isMac, ctrlKey: !isMac,
+    bubbles: true, cancelable: true,
+  }));
+}
+
+// Redo via simulated keyboard event on ProseMirror
+function handleRedo() {
+  const pm = document.querySelector('.ProseMirror') as HTMLElement | null;
+  if (!pm) return;
+  const isMac = navigator.platform.toUpperCase().includes('MAC');
+  pm.dispatchEvent(new KeyboardEvent('keydown', {
+    key: 'z', code: 'KeyZ',
+    metaKey: isMac, ctrlKey: !isMac,
+    shiftKey: true,
+    bubbles: true, cancelable: true,
+  }));
+}
+
+// Adjust heading level by delta (+1 = promote, -1 = demote)
+function handleAdjustHeading(e: Event) {
+  const ce = e as CustomEvent<number>;
+  const delta = ce.detail;
+  const pmEl = document.querySelector('.ProseMirror') as any;
+  if (!pmEl || !pmEl.pmViewDesc) return;
+  const view = pmEl.pmViewDesc.view;
+  if (!view) return;
+
+  const { state } = view;
+  const { $from } = state.selection;
+  const currentDepth = $from.depth;
+  const currentNode = $from.node(currentDepth);
+
+  const headingType = state.schema.nodes.heading;
+  const paragraphType = state.schema.nodes.paragraph;
+  if (!headingType || !paragraphType) return;
+
+  let currentLevel = 0;
+  if (currentNode.type === headingType) {
+    currentLevel = currentNode.attrs.level;
   }
 
-  if (positions.length > 0) {
+  const newLevel = Math.max(0, Math.min(6, currentLevel + delta));
+
+  if (newLevel === 0) {
+    const tr = state.tr.setBlockType(
+      $from.before(currentDepth),
+      $from.after(currentDepth),
+      paragraphType
+    );
+    view.dispatch(tr);
+  } else {
+    const tr = state.tr.setBlockType(
+      $from.before(currentDepth),
+      $from.after(currentDepth),
+      headingType,
+      { level: newLevel }
+    );
     view.dispatch(tr);
   }
 }
@@ -263,6 +422,10 @@ onMounted(() => {
   window.addEventListener(REPLACE_TEXT_EVENT, handleReplaceText);
   window.addEventListener(REPLACE_ALL_EVENT, handleReplaceAll);
   window.addEventListener(SET_HEADING_EVENT, handleSetHeading);
+  window.addEventListener(ADJUST_HEADING_EVENT, handleAdjustHeading);
+  window.addEventListener(UNDO_EVENT, handleUndo);
+  window.addEventListener(REDO_EVENT, handleRedo);
+  window.addEventListener(SELECT_MATCH_EVENT, handleSelectMatch);
 
   if (fileStore.tabCount === 0) {
     fileStore.newFile();
@@ -275,15 +438,27 @@ onUnmounted(() => {
   window.removeEventListener(REPLACE_TEXT_EVENT, handleReplaceText);
   window.removeEventListener(REPLACE_ALL_EVENT, handleReplaceAll);
   window.removeEventListener(SET_HEADING_EVENT, handleSetHeading);
+  window.removeEventListener(ADJUST_HEADING_EVENT, handleAdjustHeading);
+  window.removeEventListener(UNDO_EVENT, handleUndo);
+  window.removeEventListener(REDO_EVENT, handleRedo);
+  window.removeEventListener(SELECT_MATCH_EVENT, handleSelectMatch);
 });
 </script>
 
 <template>
-  <div class="md-editor-container" :class="{ 'is-empty': isEditorEmpty }">
-    <div v-if="loading" class="editor-loading">Loading...</div>
-    <div class="crepe-wrapper">
+  <div class="md-editor-container" :class="{ 'is-empty': isEditorEmpty && !editorStore.showSourceMode }">
+    <div v-if="loading && !editorStore.showSourceMode" class="editor-loading">Loading...</div>
+    <div v-show="!editorStore.showSourceMode" class="crepe-wrapper">
       <Milkdown />
     </div>
+    <textarea
+      v-if="editorStore.showSourceMode"
+      class="source-editor"
+      :value="fileStore.activeTab?.content || ''"
+      @input="handleSourceInput"
+      spellcheck="false"
+      autocomplete="off"
+    />
   </div>
 </template>
 
@@ -295,5 +470,23 @@ onUnmounted(() => {
   height: 100%;
   color: var(--text-tertiary);
   font-size: 13px;
+}
+
+.source-editor {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 24px 60px;
+  font-family: 'SF Mono', 'JetBrains Mono', Consolas, 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.7;
+  background: var(--editor-bg, var(--bg-primary));
+  color: var(--editor-text, var(--text-primary));
+  tab-size: 2;
+  word-wrap: break-word;
+  white-space: pre-wrap;
 }
 </style>
