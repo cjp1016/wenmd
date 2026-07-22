@@ -414,7 +414,9 @@ pub fn handle_menu_event(app: &AppHandle, event: tauri::menu::MenuEvent) {
     let action = event.id().0.as_str();
     match action {
         "quit" => {
-            app.exit(0);
+            // Delegate to the frontend so it can check for unsaved changes
+            // before actually exiting.
+            let _ = app.emit("app-quit-requested", ());
         }
         "hide" => {
             if let Some(window) = app.get_webview_window("main") {

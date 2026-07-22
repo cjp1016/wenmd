@@ -12,6 +12,9 @@ struct AppState {
     menu_locale: Mutex<MenuLocale>,
     initial_file: Mutex<Option<String>>,
     recent_files: Mutex<Vec<String>>,
+    /// When true, the next CloseRequested event will be allowed to proceed
+    /// (used after the frontend has confirmed the close).
+    force_close: Mutex<bool>,
 }
 
 /// Return the file path passed via CLI when the app was launched, if any.
@@ -93,6 +96,31 @@ fn find_file_arg() -> Option<String> {
     None
 }
 
+/// Set the force_close flag and close the main window.
+/// Called from the frontend after the user has confirmed the close
+/// (either saved or chose to discard changes).
+#[tauri::command]
+fn confirm_close(app: AppHandle) -> Result<(), String> {
+    {
+        let state = app.state::<AppState>();
+        let mut force = state.force_close.lock().map_err(|e| e.to_string())?;
+        *force = true;
+    }
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.close();
+    }
+    Ok(())
+}
+
+/// Exit the application immediately.
+/// Called from the frontend after the user has confirmed quit
+/// (either saved or chose to discard changes).
+#[tauri::command]
+fn quit_app(app: AppHandle) -> Result<(), String> {
+    app.exit(0);
+    Ok(())
+}
+
 fn check_cli_args(app: &AppHandle) {
     if let Some(path) = find_file_arg() {
         emit_open_file(app, path);
@@ -112,6 +140,7 @@ pub fn run() {
             menu_locale: Mutex::new(initial_locale),
             initial_file: Mutex::new(find_file_arg()),
             recent_files: Mutex::new(Vec::new()),
+            force_close: Mutex::new(false),
         })
         .invoke_handler(tauri::generate_handler![
             file::open_file,
@@ -126,6 +155,8 @@ pub fn run() {
             set_menu_locale,
             get_initial_file,
             update_recent_files,
+            confirm_close,
+            quit_app,
         ])
         .setup(move |app| {
             let handle = app.handle().clone();
@@ -146,10 +177,31 @@ pub fn run() {
             handle_menu_event(app, event);
         })
         .on_window_event(|window, event| {
-            // When the window is focused, check if any new CLI args appeared.
-            // This handles files opened while the app is already running on Windows.
-            if let tauri::WindowEvent::Focused(true) = event {
-                check_cli_args(&window.app_handle());
+            match event {
+                // When the window is focused, check if any new CLI args appeared.
+                // This handles files opened while the app is already running on Windows.
+                tauri::WindowEvent::Focused(true) => {
+                    check_cli_args(&window.app_handle());
+                }
+                // Intercept close requests (red X, Cmd+W, Window > Close).
+                // Always prevent the close at the OS level and delegate to the frontend,
+                // unless the force_close flag has been set by the confirm_close command.
+                tauri::WindowEvent::CloseRequested { api, .. } => {
+                    let state = window.app_handle().state::<AppState>();
+                    let should_close = state
+                        .force_close
+                        .lock()
+                        .map(|v| *v)
+                        .unwrap_or(false);
+                    if should_close {
+                        // User has already confirmed – allow the close to proceed.
+                        return;
+                    }
+                    // Prevent the default close and ask the frontend to decide.
+                    api.prevent_close();
+                    let _ = window.emit("close-requested", ());
+                }
+                _ => {}
             }
         })
         .run(tauri::generate_context!())

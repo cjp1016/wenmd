@@ -385,9 +385,6 @@ onMounted(() => {
   window.addEventListener(REDO_EVENT, handleRedo);
   window.addEventListener(SELECT_MATCH_EVENT, handleSelectMatch);
 
-  if (fileStore.tabCount === 0) {
-    fileStore.newFile();
-  }
 });
 
 onUnmounted(() => {

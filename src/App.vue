@@ -2,7 +2,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useFileStore } from './stores/fileStore';
 import { useSettingsStore } from './stores/settingsStore';
 import { useEditorStore } from './stores/editorStore';
@@ -36,10 +35,8 @@ const showUnsavedChangesDialog = ref(false);
 const isDragOver = ref(false);
 const isResizing = ref(false);
 
-// Pending close action: 'window' or tabId
-let pendingCloseAction: 'window' | null = null;
-// Flag to skip close confirmation when user explicitly chose to close without saving
-let skipCloseConfirmation = false;
+// Pending close action: 'window' (red X / Cmd+W) or 'quit' (Cmd+Q / Quit menu)
+let pendingCloseAction: 'window' | 'quit' | null = null;
 
 const SIDEBAR_MIN = 180;
 const SIDEBAR_MAX = 500;
@@ -143,10 +140,6 @@ function onDrop(e: DragEvent) {
 }
 
 onMounted(() => {
-  if (fileStore.tabCount === 0) {
-    fileStore.newFile();
-  }
-
   // Listen for about dialog event
   window.addEventListener('mdview:open-about', () => {
     showAbout.value = true;
@@ -171,24 +164,38 @@ onMounted(() => {
     // Not in Tauri environment (browser dev)
   });
 
-  // Listen for window close event to prompt for unsaved changes
-  setupWindowCloseHandler();
+  // Listen for close / quit events from the Rust backend.
+  // Rust intercepts all CloseRequested events synchronously (reliable prevent_close)
+  // and emits custom events so the frontend can show the unsaved-changes dialog.
+  setupCloseListeners();
 
   onUnmounted(() => {
     if (unlistenFileOpen) unlistenFileOpen();
   });
 });
 
-// Handle window close: check for unsaved changes before allowing close
-async function setupWindowCloseHandler() {
+// Listen for close-requested (red X / Cmd+W) and app-quit-requested (Cmd+Q / Quit menu)
+// from the Rust backend. The Rust side always prevents the OS-level close synchronously,
+// then emits these events so the frontend can decide what to do.
+function setupCloseListeners() {
   try {
-    const win = getCurrentWindow();
-    await win.onCloseRequested(async (event) => {
-      if (skipCloseConfirmation) return;
+    listen('close-requested', () => {
       if (fileStore.hasUnsavedChanges()) {
-        event.preventDefault();
         pendingCloseAction = 'window';
         showUnsavedChangesDialog.value = true;
+      } else {
+        // No unsaved changes – close immediately via Rust command.
+        invoke('confirm_close').catch(console.error);
+      }
+    });
+
+    listen('app-quit-requested', () => {
+      if (fileStore.hasUnsavedChanges()) {
+        pendingCloseAction = 'quit';
+        showUnsavedChangesDialog.value = true;
+      } else {
+        // No unsaved changes – exit immediately via Rust command.
+        invoke('quit_app').catch(console.error);
       }
     });
   } catch {
@@ -204,36 +211,29 @@ async function handleSaveAndClose() {
   } catch (e) {
     console.error('Failed to save all tabs:', e);
   }
+  if (fileStore.hasUnsavedChanges()) {
+    // Some tabs were not saved (user cancelled save dialog) – show dialog again.
+    showUnsavedChangesDialog.value = true;
+    return;
+  }
+  // All tabs saved successfully – proceed with the original action.
   if (pendingCloseAction === 'window') {
     pendingCloseAction = null;
-    if (fileStore.hasUnsavedChanges()) {
-      // Some tabs were not saved (user cancelled save dialog), show dialog again
-      showUnsavedChangesDialog.value = true;
-      return;
-    }
-    skipCloseConfirmation = true;
-    try {
-      await getCurrentWindow().close();
-    } catch {
-      // Ignore
-    } finally {
-      skipCloseConfirmation = false;
-    }
+    invoke('confirm_close').catch(console.error);
+  } else if (pendingCloseAction === 'quit') {
+    pendingCloseAction = null;
+    invoke('quit_app').catch(console.error);
   }
 }
 
-function handleCloseWithoutSaving() {
+async function handleCloseWithoutSaving() {
   showUnsavedChangesDialog.value = false;
   if (pendingCloseAction === 'window') {
     pendingCloseAction = null;
-    skipCloseConfirmation = true;
-    try {
-      getCurrentWindow().close().catch(() => {
-        // Ignore
-      });
-    } finally {
-      skipCloseConfirmation = false;
-    }
+    invoke('confirm_close').catch(console.error);
+  } else if (pendingCloseAction === 'quit') {
+    pendingCloseAction = null;
+    invoke('quit_app').catch(console.error);
   }
 }
 
